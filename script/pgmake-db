@@ -1,0 +1,17 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use lib 'lib';
+use Makefile::Parser::GmakeDB;
+use IPC::Run3;
+use Smart::Comments;
+
+my $stdout;
+my $makefile = shift || 'Makefile';
+run3 ['make', '-pq', '-f', $makefile], \undef, \$stdout, \$stdout;
+#print $stdout;
+#exit 0;
+my $ast = Makefile::Parser::GmakeDB->parse(\$stdout);
+### $ast
+
