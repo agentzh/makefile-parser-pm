@@ -8,11 +8,13 @@ all_from        ('lib/Makefile/Parser.pm');
 install_script  ('script/plmake');
 
 requires        ('Text::Balanced');
+requires        ('List::Util');
 requires        ('List::MoreUtils');
 requires        ('File::Spec');
+requires        ('Class::Accessor::Fast');
 requires        ('Cwd');
 
-build_requires  ('Test::More');
+use_test_base;
 
 auto_install;
 WriteAll;

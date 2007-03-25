@@ -3,15 +3,52 @@
 use strict;
 use warnings;
 use lib 'lib';
+
+#use Smart::Comments;
+use Getopt::Std;
 use Makefile::Parser::GmakeDB;
 use IPC::Run3;
-use Smart::Comments;
+use File::Slurp;
+use Makefile::AST::Evaluator;
+
+my %opts;
+getopts('f:', \%opts);
+my $makefile = $opts{f} || 'Makefile';
 
 my $stdout;
-my $makefile = shift || 'Makefile';
-run3 ['make', '-pq', '-f', $makefile], \undef, \$stdout, \$stdout;
+run3 ['make', '-pqRr', '-f', $makefile], \undef, \$stdout, \undef;
+write_file('/home/agentz/mdom-gmake/make.db', $stdout);
+#if ($stdout =~ m{^\s*\./Makefile_\S+\s*:\s*[^\n]*$}ms) {
+#    die $&;
+#}
 #print $stdout;
 #exit 0;
 my $ast = Makefile::Parser::GmakeDB->parse(\$stdout);
-### $ast
+$ast->{makefile} = $makefile;
+## $ast
+## var a: $ast->get_var('a')
+## var b: $ast->get_var('b')
+#die;
+my @goals;
+for my $arg (@ARGV) {
+    if ($arg =~ /(.*?)=(.*)/) {
+        my $var = Makefile::AST::Variable->new({
+                name => $1,
+                value => [$2],
+                flavor => 'recursive', # XXX right flavor?
+                origin => 'makefile', # XXX right origin?
+            });
+        $ast->add_var($var);
+    } else {
+        push @goals, $arg;
+    }
+}
+push @goals, $ast->default_goal if !@goals;
+### @goals
+my $eval = Makefile::AST::Evaluator->new($ast);
+for my $goal (@goals) {
+    ### goal: $goal
+    my $res = $eval->make($goal);
+    ### result: $res
+}
 

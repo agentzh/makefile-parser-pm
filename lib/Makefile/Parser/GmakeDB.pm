@@ -3,10 +3,10 @@ package Makefile::Parser::GmakeDB;
 use strict;
 use warnings;
 
+#use Smart::Comments;
 use List::Util qw( first );
-use Smart::Comments;
-use lib '/home/agentz/mdom-gmake/lib';
 use MDOM::Document::Gmake;
+use Makefile::AST;
 
 our @Suffixes = (
     '.out',
@@ -73,14 +73,9 @@ sub _match_suffix ($@) {
 
 sub parse ($$) {
     shift;
-    my $ast = {
-        explicit_scolon => {},
-        explicit_dcolon => {},
-        implicit => [],
-        vars => {},
-    };
+    my $ast = Makefile::AST->new;
     my $dom = MDOM::Document::Gmake->new(shift);
-    my ($var_origin, $rule);
+    my ($var_origin, $rule, $orig_lineno);
     for my $elem ($dom->elements) {
         ## elem class: $elem->class
         ## elem lineno: $elem->lineno
@@ -104,17 +99,25 @@ sub parse ($$) {
                     die "Unknown op: $op";
                 }
                 my $name = join '', @$lhs; # XXX solve refs?
-                map { $_ = "$_" } @$rhs;
-                $ast->{vars}->{$name} = {
+                my @value_tokens = map { $_->clone } @$rhs;
+                #map { $_ = "$_" } @$rhs;
+                ### LHS: $name
+                ### RHS: $rhs
+                my $var = Makefile::AST::Variable->new({
+                    name   => $name,
                     flavor => $flavor,
                     origin => $var_origin,
-                    value  => $rhs,
-                };
+                    value  => \@value_tokens,
+                });
+                $ast->add_var($var);
                 undef $var_origin;
             }
         }
         elsif ($elem =~ /^#\s+(automatic|makefile|default|environment)/) {
             $var_origin = $1;
+        }
+        elsif ($elem =~ /^#\s+.*\(from `\S+', line (\d+)\)/) {
+            $orig_lineno = $1;
         }
         elsif ($elem->isa('MDOM::Rule::Simple')) {
             my $targets = $elem->targets;
@@ -142,32 +145,40 @@ sub parse ($$) {
                     $target = '%' . $fst;
                 }
             }
-            $rule = {
-                order_prereqs  => [],
-                normal_prereqs => \@prereqs,
-                commands => [defined $command ? $command : ()],
-                colon    => $colon,
-            };
             if ($target =~ /\%/) {
                 ## implicit rule found: $target
-                $rule->{targets} = [split /\s+/, $target];
-                push @{ $ast->{implicit} }, $rule;
+                my $targets = [split /\s+/, $target];
+                $rule = Makefile::AST::Rule::Implicit->new({
+                            targets => $targets,
+                            order_prereqs => [],
+                            normal_prereqs => \@prereqs,
+                            commands => [defined $command ? $command : ()],
+                            colon => $colon,
+                        });
+                $ast->add_implicit_rule($rule);
             } else {
-                if ($colon eq ':') {
-                    $ast->{explicit_scolon}->{$target} = $rule;
-                } else {
-                    my $rules = $ast->{explicit_dcolon}->{$target} ||= [];
-                    push @$rules, $rule;
-                }
+                $rule = Makefile::AST::Rule->new({
+                    target => $target,
+                    order_prereqs  => [],
+                    normal_prereqs => \@prereqs,
+                    commands => [defined $command ? $command : ()],
+                    colon    => $colon,
+                });
+                $ast->add_explicit_rule($rule);
             }
         } elsif ($elem->isa('MDOM::Command')) {
             if (!$rule) {
                 die "command not allowed here";
             } else {
-                my @tokens = map { "$_" } $elem->elements;
-                shift @tokens if $tokens[0] eq "\t";
-                pop @tokens if $tokens[-1] eq "\n";
-                push @{ $rule->{commands} }, \@tokens;
+                #my @tokens = map { "$_" } $elem->elements;
+                #my @tokens = $elem
+                #shift @tokens if $tokens[0] eq "\t";
+                #pop @tokens if $tokens[-1] eq "\n";
+                #push @{ $rule->{commands} }, \@tokens;
+                my $first = $elem->first_element;
+                ## $first
+                $elem->remove_child($first) if $first->class eq 'MDOM::Token::Separator';
+                $rule->add_command($elem->clone); # XXX why clone?
             }
         }
     }

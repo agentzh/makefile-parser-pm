@@ -1,0 +1,698 @@
+package Makefile::AST;
+
+use strict;
+use warnings;
+
+#use Smart::Comments;
+
+use Makefile::AST::StemMatch;
+use Makefile::AST::Rule::Implicit;
+use Makefile::AST::Rule;
+use Makefile::AST::Variable;
+
+use List::Util 'first';
+use List::MoreUtils qw( uniq pairwise ) ;
+use Cwd qw/ realpath /;
+use File::Spec;
+use MDOM::Util 'trim_tokens';
+
+# XXX better name?
+our $Runtime = undef;
+
+sub makefile ($) {
+    $_[0]->{makefile};
+}
+
+sub new ($@) {
+    my $class = ref $_[0] ? ref shift : shift;
+    my $makefile = shift;
+    return bless {
+        explicit_rules => {},
+        implicit_rules => [],
+        current_scopes => [{}], # the last scope is
+                                # the default GLOBAL
+                                #  scope
+        named_scopes   => {}, # hooks for target-specific
+                              # variables
+        targets        => {},
+        makefile       => $makefile,
+    }, $class;
+}
+
+sub target_exists ($$) {
+    # XXX provide hooks for mocking file systems
+    -e $_[0];
+}
+
+sub target_ought_to_exist ($$) {
+    my ($self, $target) = @_;
+    ### Test if target ought to exist: $target
+    $self->{targets}->{$target};
+}
+
+sub apply_explicit_rules ($$) {
+    my ($self, $target) = @_;
+    my $list = $self->{explicit_rules}->{$target} || [];
+    wantarray ? @$list : $list->[0];
+}
+
+sub get_var ($$) {
+    my ($self, $name) = @_;
+    my $scopes = $self->{current_scopes};
+    for my $scope (@$scopes) {
+        if (my $var = $scope->{$name}) {
+            return $var;
+        }
+    }
+    return undef;
+}
+
+# XXX sub find_var
+# find_var(name => $name, flavor => $flavor)
+
+sub enter_scope ($@) {
+    my ($self, $name) = @_;
+    my $scope;
+    if (defined $name) {
+        my $scope =
+            $self->{named_scopes}->{$name} ||= {};
+    } else {
+        $scope = {};
+    }
+    unshift @{ $self->{current_scopes} }, $scope;
+}
+
+sub leave_scope ($) {
+    my ($self) = @_;
+    my $scopes = $self->{current_scopes};
+    shift @$scopes if @$scopes > 1;
+}
+
+sub add_var ($$) {
+    my ($self, $var) = @_;
+    # XXX variable overridding check
+    ## variable name: $var->name()
+    $self->{current_scopes}->[0]->{$var->name()} = $var;
+}
+
+sub add_auto_var ($$$) {
+    my ($self, $name, $value) = @_;
+    my $var = Makefile::AST::Variable->new(
+      { name   => $name,
+        flavor => 'simple',
+        origin => 'automatic',
+        value  => $value,
+      }
+    );
+    $self->add_var($var);
+}
+
+sub default_goal ($) {
+    $_[0]->{default_goal};
+}
+
+sub explicit_rules ($) {
+    my $self = shift;
+    my @items = values %{ $self->{explicit_rules} };
+    my @rules = map { @$_ } @items;
+    \@rules;
+}
+
+
+sub implicit_rules ($) {
+    $_[0]->{implicit_rules};
+}
+
+sub add_explicit_rule ($$) {
+    my ($self, $rule) = @_;
+    if (!defined $self->default_goal) {
+        my $target = $rule->target;
+        ### check if it's the default target: $target
+        # XXX skip the makefile itself
+        if ($target !~ m{^\./Makefile_\S+} and (substr($target, 0, 1) ne '.' or $target =~ m{/})) {
+            $self->{default_goal} = $target;
+        }
+    }
+    if ($rule->colon eq ':') {
+        # XXX check single colon rules for conflicts
+        # XXX merge prereqs if no cmd given
+        $self->{explicit_rules}->{$rule->target} =
+            [$rule];
+    } else {
+        # XXX check double colon rules for conflicts
+        my $list =
+            $self->{explicit_rules}->{$rule->target} ||=
+            [];
+        # XXX check if $list is an ARRAY ref
+        push @$list, $rule;
+    }
+    for my $prereq (@{$rule->normal_prereqs}, @{$rule->order_prereqs}) {
+        $self->{targets}->{$prereq} = 1;
+    }
+    $self->{targets}->{$rule->target} = 1;
+}
+
+sub add_implicit_rule ($$) {
+    my ($self, $rule) = @_;
+    # XXX cancel a built-in implicit rule by defining
+    # a pattern rule with the same target and
+    # prerequisites, but no commands
+    for my $target (@{ $rule->targets }) {
+        # XXX better pattern recognition
+        next if $target =~ /\%/;
+        $self->{targets}->{$target} = 1;
+    }
+    for my $prereq (@{$rule->normal_prereqs}, @{$rule->order_prereqs}) {
+        next if $prereq =~ /\%/;
+        $self->{targets}->{$prereq} = 1;
+    }
+    my $list = $self->{implicit_rules};
+    unshift @$list, $rule;
+}
+
+# implementation for the implicit rule search
+# algorithm
+sub apply_implicit_rules ($$) {
+    my ($self, $target) = @_;
+
+    # XXX handle archive(member) here
+
+    ## step 2...
+    my @rules = grep { $_->match_target($target) }
+                     @{ $self->implicit_rules };
+    ## @rules
+    return undef if !@rules;
+
+    ## step 3...
+    if (first { ! $_->match_anything } @rules) {
+        @rules = grep {
+            !( $_->match_anything && !$_->is_terminal )
+        } @rules;
+    }
+    ## @rules
+
+    ## step 4...
+    @rules = grep { @{ $_->commands } > 0 } @rules;
+    ## @rules
+
+    ### step 5...
+    for my $rule (@rules) {
+        ## target: $target
+        my $applied = $rule->apply($self, $target);
+        ### $applied
+        if ($applied) {
+            return $applied;
+        }
+    }
+
+    ### step 6...
+    for my $rule (@rules) {
+        next if $rule->is_terminal;
+        my $applied = $rule->apply(
+            $self, $target,
+            { recursive => 1 });
+        if ($applied) {
+            return $applied;
+        }
+    }
+
+    ### step 7...
+    my $applied = $self->apply_explicit_rules('.DEFAULT');
+    if ($applied) {
+        $applied->target($target);
+        return $applied;
+    }
+    return undef;
+}
+
+sub _pat2re ($@) {
+    my ($pat, $capture) = @_;
+    $pat = quotemeta $pat;
+    if ($capture) {
+        $pat =~ s/\\\%/(\\S*)/g;
+    } else {
+        $pat =~ s/\\\%/\\S*/g;
+    }
+    $pat;
+}
+
+sub _split_args($$$$) {
+    my ($self, $func, $s, $m, $n) = @_;
+    $n ||= $m;
+    my @tokens = '';
+    my @args;
+    ### $n
+    while (@args <= $n) {
+        ### split args: @args
+        ### split tokens: @tokens
+        if ($s =~ /\G\s+/gc) {
+            push @tokens, $&, '';
+        }
+        elsif ($s =~ /\G[^\$,]+/gc) {
+            $tokens[-1] .= $&;
+        }
+        elsif ($s =~ /\G,/gc) {
+            if (@args < $n - 1) {
+                push @args, [grep { $_ ne '' } @tokens];
+                @tokens = '';
+            } else {
+                $tokens[-1] .= $&;
+            }
+        }
+        elsif (my $res = MDOM::Document::Gmake::extract_interp($s)) {
+            #die $res;
+            push @tokens, MDOM::Token::Interpolation->new($res), '';
+        }
+        elsif ($s =~ /\G\$./gc) {
+            push @tokens, MDOM::Token::Interpolation->new($&), '';
+        }
+        elsif ($s =~ /\G./gc) {
+            $tokens[-1] .= $&;
+        }
+        else {
+            if (@args <= $n - 1) {
+                push @args, [grep { $_ ne '' } @tokens];
+            }
+            last if @args >= $m and @args <= $n;
+            warn $self->makefile, ":$.: ",
+            "*** insufficient number of arguments (",
+            scalar(@args), ") to function `$func'.  Stop.\n";
+            exit(2);
+        }
+    }
+    return @args;
+}
+
+sub eval_var_value ($$) {
+    my ($self, $name) = @_;
+    if (my $var = $self->get_var($name)) {
+        if ($var->flavor eq 'recursive') {
+            ## eval recursive var: $var
+            return $self->solve_refs_in_tokens(
+                $var->value
+            );
+        } else {
+            return join '', @{$var->value};
+        }
+    } else {
+        # process undefined var:
+        return '';
+    }
+}
+
+sub _text2words ($) {
+    my ($text) = @_;
+    $text =~ s/^\s+|\s+$//g;
+    split /\s+/, $text;
+}
+
+sub _check_numeric ($$$$) {
+    my ($self, $func, $order, $n) = @_;
+    if ($n !~ /^\d+$/) {
+        warn $self->makefile, ":$.: ",
+            "*** non-numeric $order argument to `$func' function: '$n'.  Stop.\n";
+        exit(2);
+    }
+}
+
+sub _check_greater_than ($$$$$) {
+    my ($self, $func, $order, $n, $value) = @_;
+    if ($n <= $value) {
+        warn $self->makefile, ":$.: *** $order argument to `$func' function must be greater than $value.  Stop.\n";
+        exit(2);
+   }
+}
+
+sub _trim ($@) {
+    for (@_) {
+        s/^\s+|\s+$//g;
+    }
+}
+
+sub _process_func_ref ($$$) {
+    my ($self, $name, $args) = @_;
+    ### process func ref: $name
+    # XXX $name = $self->_process_refs($name);
+    my @args;
+    my $nargs = scalar(@args);
+    if ($name eq 'subst') {
+        my @args = $self->_split_args($name, $args, 3);
+        map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        ### arguments: @args
+        my ($from, $to, $text) = @args;
+        $from = quotemeta($from);
+        $text =~ s/$from/$to/g;
+        return $text;
+    }
+    if ($name eq 'patsubst') {
+        my @args = $self->_split_args($name, $args, 3);
+        map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        my ($pattern, $replacement, $text) = @args;
+        my $re = _pat2re($pattern, 1);
+        $replacement =~ s/\%/\${1}/g;
+        $replacement = qq("$replacement");
+        #### pattern: $re
+        #### replacement: $replacement
+        #### text: $text
+        my $code = "s/^$re\$/$replacement/e";
+        #### code: $code
+        my @words = _text2words($text);
+        map { eval $code; } @words;
+        return join ' ', grep { $_ ne '' } @words;
+    }
+    if ($name eq 'strip') {
+        my @args = $self->_split_args($name, $args, 1);
+        map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        my ($string) = @args;
+        $string =~ s/^\s+|\s+$//g;
+        $string =~ s/\s+/ /g;
+        return $string;
+    }
+    if ($name eq 'findstring') {
+        my @args = $self->_split_args($name, $args, 2);
+        map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        my ($find, $in) = @args;
+        if (index($in, $find) >= 0) {
+            return $find;
+        } else {
+            return '';
+        }
+        my ($patterns, $text) = @args;
+        my @regexes = map { _pat2re($_) }
+            split /\s+/, $patterns;
+        ## regexes: @regexes
+        my $regex = join '|', map { "(?:$_)" } @regexes;
+        ## regex: $regex
+        my @words = _text2words($text);
+        return join ' ', grep /^$regex$/, @words;
+
+    }
+    if ($name eq 'filter') {
+        my @args = $self->_split_args($name, $args, 2);
+        map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        my ($patterns, $text) = @args;
+        my @regexes = map { _pat2re($_) }
+            split /\s+/, $patterns;
+        ## regexes: @regexes
+        my $regex = join '|', map { "(?:$_)" } @regexes;
+        ## regex: $regex
+        my @words = _text2words($text);
+        return join ' ', grep /^$regex$/, @words;
+    }
+    if ($name eq 'filter-out') {
+        my @args = $self->_split_args($name, $args, 2);
+        map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        my ($patterns, $text) = @args;
+        my @regexes = map { _pat2re($_) }
+            split /\s+/, $patterns;
+        ## regexes: @regexes
+        my $regex = join '|', map { "(?:$_)" } @regexes;
+        ## regex: $regex
+        my @words = _text2words($text);
+        return join ' ', grep !/^$regex$/, @words;
+    }
+    if ($name eq 'sort') {
+        my @args = $self->_split_args($name, $args, 1);
+        map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        my ($list) = @args;
+        _trim($list);
+        return join ' ', uniq sort split /\s+/, $list;
+    }
+    if ($name eq 'words') {
+        my @args = $self->_split_args($name, $args, 1);
+        map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        my ($text) = @args;
+        my @words = _text2words($text);
+        return scalar(@words);
+    }
+    if ($name eq 'word') {
+        my @args = $self->_split_args($name, $args, 2);
+        map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        my ($n, $text) = @args;
+        _trim($n);
+        $self->_check_numeric('word', 'first', $n);
+        $self->_check_greater_than('word', 'first', $n, 0);
+        my @words = _text2words($text);
+        return $n > @words ? '' : $words[$n - 1];
+    }
+    if ($name eq 'wordlist') {
+        my @args = $self->_split_args($name, $args, 3);
+        map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        my ($s, $e, $text) = @args;
+        _trim($s, $e, $text);
+        $self->_check_numeric('wordlist', 'first', $s);
+        $self->_check_numeric('wordlist', 'second', $e);
+        $self->_check_greater_than('wordlist', 'first', $s, 0);
+        $self->_check_greater_than('wordlist', 'second', $s, -1);
+        my @words = _text2words($text);
+        if ($s > $e || $s > @words || $e == 0) {
+            return '';
+        }
+        $e = @words if $e > @words;
+        return join ' ', @words[$s-1..$e-1];
+    }
+    if ($name eq 'firstword') {
+        my @args = $self->_split_args($name, $args, 1);
+        map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        my ($text) = @args;
+        my @words = _text2words($text);
+        return @words > 0 ? $words[0] : '';
+    }
+    if ($name eq 'lastword') {
+        my @args = $self->_split_args($name, $args, 1);
+        map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        my ($text) = @args;
+        my @words = _text2words($text);
+        return @words > 0 ? $words[-1] : '';
+    }
+    if ($name eq 'dir') {
+        my @args = $self->_split_args($name, $args, 1);
+        map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        my ($text) = @args;
+        my @names = _text2words($text);
+        return join ' ', map { /.*\// ? $& : './' } @names;
+    }
+    if ($name eq 'notdir') {
+        my @args = $self->_split_args($name, $args, 1);
+        map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        my ($text) = @args;
+        my @names = _text2words($text);
+        return join ' ', map { s/.*\///; $_ } @names;
+    }
+    if ($name eq 'suffix') {
+        my @args = $self->_split_args($name, $args, 1);
+        map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        my ($text) = @args;
+        my @names = _text2words($text);
+        my $s = join ' ', map { /.*(\..*)/ ? $1 : '' } @names;
+        $s =~ s/\s+$//g;
+        return $s;
+    }
+    if ($name eq 'basename') {
+        my @args = $self->_split_args($name, $args, 1);
+        map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        my ($text) = @args;
+        my @names = _text2words($text);
+        my $s = join ' ', map { /(.*)\./ ? $1 : $_ } @names;
+        $s =~ s/\s+$//g;
+        return $s;
+    }
+    if ($name eq 'addsuffix') {
+        my @args = $self->_split_args($name, $args, 2);
+        map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        my ($suffix, $text) = @args;
+        #_trim($suffix);
+        my @names = _text2words($text);
+        return join ' ', map { $_ . $suffix } @names;
+    }
+    if ($name eq 'addprefix') {
+        my @args = $self->_split_args($name, $args, 2);
+        map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        my ($suffix, $text) = @args;
+        #_trim($suffix);
+        my @names = _text2words($text);
+        return join ' ', map { $suffix . $_ } @names;
+    }
+    if ($name eq 'join') {
+        my @args = $self->_split_args($name, $args, 2);
+        map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        my ($list_1, $list_2) = @args;
+        my @list_1 = _text2words($list_1);
+        my @list_2 = _text2words($list_2);
+        return join ' ', pairwise {
+            no warnings 'uninitialized';
+            $a . $b
+        } @list_1, @list_2;
+    }
+    if ($name eq 'wildcard') {
+        my @args = $self->_split_args($name, $args, 1);
+        map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        my ($pattern) = @args;
+        return join ' ', grep { -e $_ } glob $pattern;
+    }
+    if ($name eq 'realpath') {
+        no warnings 'uninitialized';
+        my @args = $self->_split_args($name, $args, 1);
+        map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        my ($text) = @args;
+        my @names = _text2words($text);
+        return join ' ', map { realpath($_) } @names;
+    }
+    if ($name eq 'abspath') {
+        my @args = $self->_split_args($name, $args, 1);
+        map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        my ($text) = @args;
+        my @names = _text2words($text);
+        my @paths = map { File::Spec->rel2abs($_) } @names;
+        for my $path (@paths) {
+            my @f = split '/', $path;
+            my @new_f;
+            for (@f) {
+                if ($_ eq '..') {
+                    pop @new_f;
+                } else {
+                    push @new_f, $_;
+                }
+            }
+            $path = join '/', @new_f;
+        }
+        return join ' ', @paths;
+    }
+    if ($name eq 'shell') {
+        my @args = $self->_split_args($name, $args, 1);
+        map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        my ($cmd) = @args;
+        my $output = `$cmd`;
+        $output =~ s/(?:\r?\n)+$//g;
+        $output =~ s/\r?\n/ /g;
+        return $output;
+    }
+    if ($name eq 'if') {
+        my @args = $self->_split_args($name, $args, 2, 3);
+        #map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        my ($condition, $then_part, $else_part) = @args;
+        trim_tokens($condition);
+        $condition = $self->solve_refs_in_tokens($condition);
+        return $condition eq '' ?
+                    $self->solve_refs_in_tokens($else_part)
+               :
+                    $self->solve_refs_in_tokens($then_part);
+    }
+    if ($name eq 'or') {
+        my @args = $self->_split_args($name, $args, 1, 1000_000_000);
+        #map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        for my $arg (@args) {
+            trim_tokens($arg);
+            my $value = $self->solve_refs_in_tokens($arg);
+            return $value if $value ne '';
+        }
+        return '';
+    }
+    if ($name eq 'and') {
+        my @args = $self->_split_args($name, $args, 1, 1000_000_000);
+        #map { $_ = $self->solve_refs_in_tokens($_) } @args;
+        ## arguments for 'and': @args
+        my $value;
+        for my $arg (@args) {
+            trim_tokens($arg);
+            $value = $self->solve_refs_in_tokens($arg);
+            return '' if $value eq '';
+        }
+        return $value;
+    }
+    if ($name eq 'foreach') {
+        my @args = $self->_split_args($name, $args, 3);
+        my ($var, $list, $text) = @args;
+        $var = $self->solve_refs_in_tokens($var);
+        $list = $self->solve_refs_in_tokens($list);
+        my @words = _text2words($list);
+        # save the original status of $var
+        my $rvars = $self->{_vars};
+        my $not_exist = !exists $rvars->{$var};
+        my $old_val = $rvars->{$var};
+
+        my @results;
+        for my $word (@words) {
+            $rvars->{$var} = $word;
+            #warn "$word";
+            push @results, $self->solve_refs_in_tokens($text);
+        }
+
+        # restore the original status of $var
+        if ($not_exist) {
+            delete $rvars->{$var};
+        } else {
+            $rvars->{$var} = $old_val;
+        }
+
+        return join ' ', @results;
+    }
+    if ($name eq 'error') {
+        my ($text) = $self->_split_args($name, $args, 1);
+        $text = $self->solve_refs_in_tokens($text);
+        warn $self->makefile, ":$.: *** $text.  Stop.\n";
+        exit(2) if $Runtime;
+        return '';
+    }
+    if ($name eq 'warning') {
+        my ($text) = $self->_split_args($name, $args, 1);
+        $text = $self->solve_refs_in_tokens($text);
+        warn $self->makefile, ":$.: $text\n";
+        return '';
+    }
+    if ($name eq 'info') {
+        my ($text) = $self->_split_args($name, $args, 1);
+        $text = $self->solve_refs_in_tokens($text);
+        print "$text\n";
+        return '';
+    }
+
+    return undef;
+}
+
+sub solve_refs_in_tokens ($$) {
+    my ($self, $tokens) = @_;
+    return '' if !$tokens;
+    my @new_tokens;
+    for my $token (@$tokens) {
+        if (!ref $token or !$token->isa('MDOM::Token::Interpolation')) {
+            ### non-ref token: $token
+            push @new_tokens, $token;
+            next;
+        }
+        if ($token =~ /^\$[{(](.*)[)}]$/) {
+            my $s = $1;
+            if ($s =~ /^([-\w]+)\s+(.*)$/) {
+                my $res = $self->_process_func_ref($1, $2);
+                if (defined $res) {
+                    push @new_tokens, $res;
+                    next;
+                }
+            } elsif ($s =~ /^(\S+?):(\S+?)=(\S+)$/) {
+                my ($var, $from, $to) = ($1, $2, $3);
+                my $res = $self->_process_func_ref(
+                    'patsubst', "\%$from,\%$to,\$($var)"
+                );
+                if (defined $res) {
+                    push @new_tokens, $res;
+                    next;
+                }
+            }
+            ### found variable reference: $1
+            ### evaluating variable : $s
+            push @new_tokens, $self->eval_var_value($s);
+            next;
+        } elsif ($token =~ /^\$\$$/) {
+            push @new_tokens, '$';
+            next;
+        } elsif ($token =~ /^\$(.)$/) {
+            push @new_tokens, $self->eval_var_value($1);
+            next;
+        }
+        push @new_tokens, $token;
+    }
+    ### solving results: join '', @new_tokens
+    return join '', @new_tokens;
+}
+
+1;
