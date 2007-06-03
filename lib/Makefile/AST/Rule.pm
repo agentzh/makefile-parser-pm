@@ -48,19 +48,22 @@ sub run_command ($$) {
     $cmd =~ s/^\s+|\s+$//gs;
     return if $cmd eq '';
     ### command: $cmd
-    if (!$Makefile::Evaluator::Quiet &&
-            (!$silent || $Makefile::Evaluator::JustPrint)) {
+    if (!$Makefile::AST::Evaluator::Quiet &&
+            (!$silent || $Makefile::AST::Evaluator::JustPrint)) {
         print "$cmd\n";
     }
-    if (! $Makefile::Evaluator::JustPrint) {
+    if (! $Makefile::AST::Evaluator::JustPrint) {
         system($ast->eval_var_value('SHELL'), '-c', $cmd);
         if ($? != 0) {
             my $retval = $? >> 8;
             # XXX better error message
-            warn "$cmd returns nonzero status: $retval";
-            if (!$tolerant or $critical) {
+            if (!$Makefile::AST::Evaluator::IgnoreErrors &&
+                    (!$tolerant || $critical)) {
                 # XXX better handling for tolerance
-                die " Stop.\n";
+                die "$0: *** [all] Error $retval\n";
+            } else {
+                my $target = $ast->get_var('@')->value->[0];
+                warn "$0: [$target] Error $retval (ignored)\n";
             }
         }
     }

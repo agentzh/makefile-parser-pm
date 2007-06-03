@@ -7,7 +7,7 @@ use warnings;
 my $Parent;
 our %Required;
 my %Making;
-our ($Quiet, $JustPrint);
+our ($Quiet, $JustPrint, $IgnoreErrors);
 
 sub new ($$) {
     my $class = ref $_[0] ? ref shift : shift;
