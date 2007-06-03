@@ -48,17 +48,20 @@ sub run_command ($$) {
     $cmd =~ s/^\s+|\s+$//gs;
     return if $cmd eq '';
     ### command: $cmd
-    if (!$silent) {
+    if (!$Makefile::Evaluator::Quiet &&
+            (!$silent || $Makefile::Evaluator::JustPrint)) {
         print "$cmd\n";
     }
-    system($ast->eval_var_value('SHELL'), '-c', $cmd);
-    if ($? != 0) {
-        my $retval = $? >> 8;
-        # XXX better error message
-        warn "$cmd returns nonzero status: $retval";
-        if (!$tolerant or $critical) {
-            # XXX better handling for tolerance
-            die " Stop.\n";
+    if (! $Makefile::Evaluator::JustPrint) {
+        system($ast->eval_var_value('SHELL'), '-c', $cmd);
+        if ($? != 0) {
+            my $retval = $? >> 8;
+            # XXX better error message
+            warn "$cmd returns nonzero status: $retval";
+            if (!$tolerant or $critical) {
+                # XXX better handling for tolerance
+                die " Stop.\n";
+            }
         }
     }
 }

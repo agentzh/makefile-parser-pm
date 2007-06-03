@@ -23,6 +23,8 @@ Getopt::Long::Configure ("bundling");
 GetOptions(
     'f=s' => \$makefile,
     'j=s' => \$njobs,  # job server is not really supported
+    'n'   => \$Makefile::Evaluator::JustPrint,
+    's'   => \$Makefile::Evaluator::Quiet,
 ) or die "Usage: $0 [-f makefile] goals...\n";
 ### $makefile
 ### @ARGV
