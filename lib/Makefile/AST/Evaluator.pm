@@ -2,12 +2,10 @@ package Makefile::AST::Evaluator;
 
 use strict;
 use warnings;
-use constant {
-    UP_TO_DATE => 1,
-    REBUILT    => 2,
-};
 
 #use Smart::Comments;
+my $Parent;
+our %Required;
 
 sub new ($$) {
     my $class = ref $_[0] ? ref shift : shift;
@@ -34,11 +32,12 @@ sub make ($$) {
     my ($self, $target) = @_;
     my $retval;
     my @rules = $self->ast->apply_explicit_rules($target);
+    ### @rules
     for my $rule (@rules) {
         if (! @{ $rule->commands }) {
             $retval = $self->make_implicitly($target);
         } else {
-            $retval = $self->make_by_rule($rule);
+            $retval = $self->make_by_rule($target => $rule);
         }
     }
     return $retval;
@@ -47,8 +46,8 @@ sub make ($$) {
 sub make_implicitly ($$) {
     my ($self, $target) = @_;
     my $rule = $self->ast->apply_implicit_rules($target);
-    my $retval = $self->make_by_rule($rule);
-    if ($retval == REBUILT) {
+    my $retval = $self->make_by_rule($target => $rule);
+    if ($retval eq 'REBUILT') {
         for my $target ($rule->other_targets) {
             $self->mark_as_updated($target);
         }
@@ -56,25 +55,36 @@ sub make_implicitly ($$) {
     return $retval;
 }
 
-sub make_by_rule ($$) {
-    my ($self, $rule) = @_;
+sub make_by_rule ($$$) {
+    my ($self, $goal, $rule) = @_;
     ### make by rule: $rule
-    my $goal = $rule->target;
-    return REBUILT if $self->is_updated($goal);
+    return 'REBUILT' if $self->is_updated($goal);
     if (!$rule) {
         if (-f $goal) {
-            return UP_TO_DATE;
+            return 'UP_TO_DATE';
         } else {
-            die "No rule to build target $goal";
+            if ($Required{$goal}) {
+                my $msg =
+                    "$0: *** No rule to make target `$goal'";
+                if (defined $Parent) {
+                    $msg .=
+                        ", needed by `$Parent'";
+                }
+                die "$msg.  Stop.\n";
+            } else {
+                return 'UP_TO_DATE';
+            }
         }
     }
     my $out_of_date = !-f $goal;
+    $Parent = $goal;
     for my $prereq (@{ $rule->normal_prereqs }) {
         # XXX handle order-only prepreqs here
+        $Required{$prereq} = 1;
         my $res = $self->make($prereq);
-        if ($res == REBUILT) {
+        if ($res eq 'REBUILT') {
             $out_of_date = 1;
-        } elsif ($res == UP_TO_DATE) {
+        } elsif ($res eq 'UP_TO_DATE') {
             if (!$out_of_date) {
                 if (-M $prereq < -M $goal) {
                     ### prereq file is newer: $prereq
@@ -88,9 +98,9 @@ sub make_by_rule ($$) {
     if ($out_of_date) {
         $rule->run_commands($self->ast);
         $self->mark_as_updated($rule->target);
-        return REBUILT;
+        return 'REBUILT';
     }
-    return UP_TO_DATE;
+    return 'UP_TO_DATE';
 }
 
 1;
