@@ -10,22 +10,39 @@ use Makefile::Parser::GmakeDB;
 use IPC::Run3;
 use File::Slurp;
 use Makefile::AST::Evaluator;
+use List::Util 'first';
 
-my ($makefile, @goals);
+my @DefaultMakefile = (
+    'GNUmakefile',
+    'makefile',
+    'Makefile'
+);
+
+my ($makefile, $njobs, @goals);
+Getopt::Long::Configure ("bundling");
 GetOptions(
     'f=s' => \$makefile,
+    'j=s' => \$njobs,  # job server is not really supported
 ) or die "Usage: $0 [-f makefile] goals...\n";
 ### $makefile
 ### @ARGV
-if (!-f $makefile) {
+if (!defined $makefile) {
+    $makefile = first { -f $_ } @DefaultMakefile;
+} elsif (!-f $makefile) {
     warn "$0: $makefile: No such file or directory\n";
     push @goals, $makefile;
     $Makefile::AST::Evaluator::Required{$makefile} = 1;
 }
 $makefile = 'Makefile' if !defined $makefile;
 
-my $stdout;
-run3 ['make', '-pqRr', '-f', $makefile], \undef, \$stdout, \undef;
+my ($stdout, $stderr);
+run3 ['make', '-pqRr', '-f', $makefile], undef, \$stdout, \$stderr;
+## $stderr
+my $exit_code = $? >> 8;
+if ($stderr and $exit_code == 2 and $stderr !~ /^make:/) {
+    warn $stderr;
+    exit $exit_code;
+}
 
 # XXX debug only
 write_file('/home/agentz/mdom-gmake/make.db', $stdout);
@@ -65,8 +82,8 @@ for my $goal (@goals) {
     ### goal: $goal
     my $res = $eval->make($goal);
     ### result: $res
-    if ($res eq 'UP_TO_DATE') {
-        print "$0: Nothing to be done for `target'.\n";
+    if ($res and $res eq 'UP_TO_DATE') {
+        print "$0: Nothing to be done for `$goal'.\n";
     }
 }
 

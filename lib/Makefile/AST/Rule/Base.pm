@@ -13,5 +13,9 @@ sub add_command ($$) {
     push @{ $self->{commands} }, $cmd;
 }
 
+sub has_command ($) {
+    my ($self) = @_;
+    return scalar @{ $self->commands };
+}
 
 1;

@@ -6,15 +6,27 @@ use warnings;
 #use Smart::Comments;
 use base 'Makefile::AST::Rule::Base';
 use MDOM::Util 'trim_tokens';
+use List::MoreUtils;
 
 __PACKAGE__->mk_accessors(qw{
     stem target other_targets
 });
 
+# XXX: generate description for the rule
+sub as_str ($$) {
+    my $self = shift;
+    my $str = $self->target .
+            $self->colon .
+            join(" ", @{ $self->normal_prereqs }) . ";" .
+            join("", map { "[$_]" } @{ $self->commands });
+    $str =~ s/\n+//g;
+    $str;
+}
+
 sub run_command ($$) {
     my ($self, $ast, $raw_cmd) = @_;
 
-    ### $raw_cmd
+    ## $raw_cmd
     my @tokens = $raw_cmd->elements;
     my ($silent, $tolerant, $critical);
     while ($tokens[0]->class eq 'MDOM::Token::Modifier') {
@@ -53,12 +65,15 @@ sub run_command ($$) {
 
 sub run_commands ($$) {
     my ($self, $ast) = @_;
+    my @nprereqs = @{ $self->normal_prereqs };
     $ast->add_auto_var(
-        '@' => $self->target,
-        '<' => ($self->normal_prereqs)[0], # XXX better solutions?
-        '*' => $self->stem,
-        { replace => 0 }
+        '@' => [$self->target],
+        '<' => [$nprereqs[0]], # XXX better solutions?
+        '*' => [$self->stem],
+        '^' => [List::MoreUtils::uniq(@nprereqs)],
+        # XXX add more automatic vars' defs here
     );
+    ### auto $^: $ast->get_var('^')
     for my $cmd (@{ $self->commands }) {
         $self->run_command($ast, $cmd);
     }

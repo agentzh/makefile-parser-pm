@@ -75,7 +75,7 @@ sub parse ($$) {
     shift;
     my $ast = Makefile::AST->new;
     my $dom = MDOM::Document::Gmake->new(shift);
-    my ($var_origin, $rule, $orig_lineno);
+    my ($var_origin, $rule, $orig_lineno, $not_a_target);
     for my $elem ($dom->elements) {
         ## elem class: $elem->class
         ## elem lineno: $elem->lineno
@@ -118,9 +118,16 @@ sub parse ($$) {
         }
         elsif ($elem =~ /^#\s+.*\(from `\S+', line (\d+)\)/) {
             $orig_lineno = $1;
-            ### lineno: $orig_lineno
+            ## lineno: $orig_lineno
+        }
+        elsif ($elem =~ /^# Not a target:$/) {
+            $not_a_target = 1;
         }
         elsif ($elem->isa('MDOM::Rule::Simple')) {
+            if ($not_a_target) {
+                $not_a_target = 0;
+                next;
+            }
             my $targets = $elem->targets;
             my $colon   = $elem->colon;
             my $prereqs = $elem->prereqs;
@@ -180,11 +187,17 @@ sub parse ($$) {
                 ## $first
                 $elem->remove_child($first)
                     if $first->class eq 'MDOM::Token::Separator';
-                ### lineno2: $orig_lineno
+                ## lineno2: $orig_lineno
                 $elem->{lineno} = $orig_lineno if $orig_lineno;
                 $rule->add_command($elem->clone); # XXX why clone?
             }
         }
+    }
+    {
+        my $var = $ast->get_var('.DEFAULT_GOAL');
+        my $token = $var->value->[0];
+        $ast->{default_goal} = $token->content if $token;
+        ### DEFAULT GOAL: $ast->default_goal
     }
     $ast;
 }

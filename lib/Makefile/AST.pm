@@ -95,16 +95,19 @@ sub add_var ($$) {
     $self->{current_scopes}->[0]->{$var->name()} = $var;
 }
 
-sub add_auto_var ($$$) {
-    my ($self, $name, $value) = @_;
-    my $var = Makefile::AST::Variable->new(
-      { name   => $name,
-        flavor => 'simple',
-        origin => 'automatic',
-        value  => $value,
-      }
-    );
-    $self->add_var($var);
+sub add_auto_var ($$$@) {
+    my $self = shift;
+    my %pairs = @_;
+    while (my ($name, $value) = each %pairs) {
+        my $var = Makefile::AST::Variable->new(
+          { name   => $name,
+            flavor => 'simple',
+            origin => 'automatic',
+            value  => $value,
+          }
+        );
+        $self->add_var($var);
+    }
 }
 
 sub default_goal ($) {
@@ -286,8 +289,9 @@ sub _split_args($$$$) {
 sub eval_var_value ($$) {
     my ($self, $name) = @_;
     if (my $var = $self->get_var($name)) {
+        ### $var
         if ($var->flavor eq 'recursive') {
-            ### HERE! eval_var_value
+            ## HERE! eval_var_value
             ## eval recursive var: $var
             return $self->solve_refs_in_tokens(
                 $var->value
