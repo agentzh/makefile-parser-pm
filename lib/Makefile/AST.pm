@@ -287,6 +287,7 @@ sub eval_var_value ($$) {
     my ($self, $name) = @_;
     if (my $var = $self->get_var($name)) {
         if ($var->flavor eq 'recursive') {
+            ### HERE! eval_var_value
             ## eval recursive var: $var
             return $self->solve_refs_in_tokens(
                 $var->value

@@ -31,6 +31,7 @@ sub run_command ($$) {
         }
         trim_tokens(\@tokens);
     }
+    local $. = $raw_cmd->lineno;
     my $cmd = $ast->solve_refs_in_tokens(\@tokens);
     $cmd =~ s/^\s+|\s+$//gs;
     return if $cmd eq '';

@@ -23,6 +23,7 @@ write_file('/home/agentz/mdom-gmake/make.db', $stdout);
 #}
 #print $stdout;
 #exit 0;
+$Makefile::AST::Runtime = 1;
 my $ast = Makefile::Parser::GmakeDB->parse(\$stdout);
 $ast->{makefile} = $makefile;
 ## $ast

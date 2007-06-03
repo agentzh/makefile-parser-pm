@@ -118,6 +118,7 @@ sub parse ($$) {
         }
         elsif ($elem =~ /^#\s+.*\(from `\S+', line (\d+)\)/) {
             $orig_lineno = $1;
+            ### lineno: $orig_lineno
         }
         elsif ($elem->isa('MDOM::Rule::Simple')) {
             my $targets = $elem->targets;
@@ -177,7 +178,10 @@ sub parse ($$) {
                 #push @{ $rule->{commands} }, \@tokens;
                 my $first = $elem->first_element;
                 ## $first
-                $elem->remove_child($first) if $first->class eq 'MDOM::Token::Separator';
+                $elem->remove_child($first)
+                    if $first->class eq 'MDOM::Token::Separator';
+                ### lineno2: $orig_lineno
+                $elem->{lineno} = $orig_lineno if $orig_lineno;
                 $rule->add_command($elem->clone); # XXX why clone?
             }
         }
