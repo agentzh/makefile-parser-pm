@@ -53,9 +53,14 @@ run3 ['make', '-pqRr', '-f', $makefile, @var_defs], undef, \$stdout, \$stderr;
 ## $stderr
 my $exit_code = $? >> 8;
 if ($stderr and $exit_code == 2 and $stderr !~ /^make:/) {
+    $stderr =~ s/^make:/$0:/msg;
     warn $stderr;
     exit $exit_code;
 }
+if ($stderr =~ /warning: (overriding|ignoring old) commands for target/) {
+    warn $stderr;
+}
+
 #die "GNU make stdout: $stdout\n";
 
 # XXX debug only
