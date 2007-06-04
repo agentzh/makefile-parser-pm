@@ -38,17 +38,34 @@ if (!defined $makefile) {
 }
 $makefile = 'Makefile' if !defined $makefile;
 
+my @var_defs;
+for my $arg (@ARGV) {
+    if ($arg =~ /(.*?)=(.*)/) {
+        push @var_defs, $arg;
+    } else {
+        push @goals, $arg;
+    }
+}
+### var defs via command line: @var_defs
+
 my ($stdout, $stderr);
-run3 ['make', '-pqRr', '-f', $makefile], undef, \$stdout, \$stderr;
+run3 ['make', '-pqRr', '-f', $makefile, @var_defs], undef, \$stdout, \$stderr;
 ## $stderr
 my $exit_code = $? >> 8;
 if ($stderr and $exit_code == 2 and $stderr !~ /^make:/) {
     warn $stderr;
     exit $exit_code;
 }
+#die "GNU make stdout: $stdout\n";
 
 # XXX debug only
 write_file('/home/agentz/mdom-gmake/make.db', $stdout);
+
+# patch the database output to work around gmake bugs
+patch_database(\$stdout);
+
+# XXX debug only
+write_file('/home/agentz/mdom-gmake/make.db.patched', $stdout);
 
 #if ($stdout =~ m{^\s*\./Makefile_\S+\s*:\s*[^\n]*$}ms) {
 #    die $&;
@@ -65,19 +82,7 @@ $ast->{makefile} = $makefile;
 ## var b: $ast->get_var('b')
 #die;
 
-for my $arg (@ARGV) {
-    if ($arg =~ /(.*?)=(.*)/) {
-        my $var = Makefile::AST::Variable->new({
-                name => $1,
-                value => [$2],
-                flavor => 'recursive', # XXX right flavor?
-                origin => 'makefile', # XXX right origin?
-            });
-        $ast->add_var($var);
-    } else {
-        push @goals, $arg;
-    }
-}
+
 push @goals, $ast->default_goal if !@goals;
 ### @goals
 my $eval = Makefile::AST::Evaluator->new($ast);
@@ -88,5 +93,13 @@ for my $goal (@goals) {
     if ($res and $res eq 'UP_TO_DATE') {
         print "$0: Nothing to be done for `$goal'.\n";
     }
+}
+
+# XXX promote the fixes on the GNU make side
+sub patch_database {
+    my $ref = shift;
+    #$$ref =~ s/(\n\S+)#/$1\\#$2/gsm;
+    $$ref =~ s/^(\S[^\n]*)(?<!\\)#(\S[^\n]*\n#  Implicit rule search has)/$1\\#$2/msg;
+    $$ref =~ s/^(\S[^\n]*)(?<!\\):(\S[^\n]*:\n#  Implicit rule search has)/$1\\:$2/msg;
 }
 

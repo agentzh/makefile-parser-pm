@@ -43,6 +43,12 @@ our @Suffixes = (
     '.el'
 );
 
+# need a better place for this sub:
+sub solve_escaped ($) {
+    my $ref = shift;
+    $$ref =~ s/\\ ([\#\\:\n])/$1/gx;
+}
+
 sub _match_suffix ($@);
 
 sub _match_suffix ($@) {
@@ -101,8 +107,8 @@ sub parse ($$) {
                 my $name = join '', @$lhs; # XXX solve refs?
                 my @value_tokens = map { $_->clone } @$rhs;
                 #map { $_ = "$_" } @$rhs;
-                ### LHS: $name
-                ### RHS: $rhs
+                ## LHS: $name
+                ## RHS: $rhs
                 my $var = Makefile::AST::Variable->new({
                     name   => $name,
                     flavor => $flavor,
@@ -113,7 +119,7 @@ sub parse ($$) {
                 undef $var_origin;
             }
         }
-        elsif ($elem =~ /^#\s+(automatic|makefile|default|environment)/) {
+        elsif ($elem =~ /^#\s+(automatic|makefile|default|environment|command line)/) {
             $var_origin = $1;
         }
         elsif ($elem =~ /^#\s+.*\(from `\S+', line (\d+)\)/) {
@@ -132,8 +138,20 @@ sub parse ($$) {
             my $colon   = $elem->colon;
             my $prereqs = $elem->prereqs;
             my $command = $elem->command;
-            my $target = join '', @$targets; # XXX solve refs?
-            my @prereqs = split /\s+/, join '', @$prereqs; # XXX solve refs?
+
+            ## Target (raw): $targets
+            ## Prereq (raw): $prereqs
+
+            my $target = join '', @$targets;
+            my @prereqs =  split /\s+/, join '', @$prereqs;
+
+            # Solve escaped chars:
+            solve_escaped(\$target);
+            map { solve_escaped(\$_) } @prereqs;
+
+            ### Target: $target
+            ### Prereqs: @prereqs
+
             map { $_ = "$_" } @$prereqs;
             if ($target !~ /\s/ and $target !~ /\%/ and !@prereqs) {
                 ## try to recognize suffix rule: $target
@@ -195,8 +213,9 @@ sub parse ($$) {
     }
     {
         my $var = $ast->get_var('.DEFAULT_GOAL');
-        my $token = $var->value->[0];
-        $ast->{default_goal} = $token->content if $token;
+        my $token = join "", @{ $var->value };
+        ## default goal's value: $var
+        $ast->{default_goal} = $token if $token;
         ### DEFAULT GOAL: $ast->default_goal
     }
     $ast;
