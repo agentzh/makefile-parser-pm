@@ -99,6 +99,7 @@ for my $goal (@goals) {
 sub patch_database {
     my $ref = shift;
     #$$ref =~ s/(\n\S+)#/$1\\#$2/gsm;
+    $$ref =~ s/^(\S[^\n]*)(?<!\\)\\(\S[^\n]*\n#  Implicit rule search has)/$1\\:$2/msg;
     $$ref =~ s/^(\S[^\n]*)(?<!\\)#(\S[^\n]*\n#  Implicit rule search has)/$1\\#$2/msg;
     $$ref =~ s/^(\S[^\n]*)(?<!\\):(\S[^\n]*:\n#  Implicit rule search has)/$1\\:$2/msg;
 }

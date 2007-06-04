@@ -87,6 +87,7 @@ sub parse ($$) {
         ## elem lineno: $elem->lineno
         next if $elem->isa('MDOM::Token::Whitespace');
         if ($elem->isa('MDOM::Assignment')) {
+            ## Found assignment: $elem->source
             if (!$var_origin) {
                 my $lineno = $elem->lineno;
                 die "ERROR: line $lineno: No flavor found for the assignment";
@@ -130,6 +131,8 @@ sub parse ($$) {
             $not_a_target = 1;
         }
         elsif ($elem->isa('MDOM::Rule::Simple')) {
+            ### Found rule: $elem->source
+            ### not a target? : $not_a_target
             if ($not_a_target) {
                 $not_a_target = 0;
                 next;
@@ -194,7 +197,8 @@ sub parse ($$) {
             }
         } elsif ($elem->isa('MDOM::Command')) {
             if (!$rule) {
-                die "command not allowed here";
+                die "error: line " . $elem->lineno .
+                    ": Command not allowed here";
             } else {
                 #my @tokens = map { "$_" } $elem->elements;
                 #my @tokens = $elem
