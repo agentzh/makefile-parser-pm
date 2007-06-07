@@ -248,7 +248,12 @@ sub parse ($$) {
             }
             if ($elem->name eq 'endef') {
                 ### parsed a define directive: $directive
-                # XXX trim the trailing new lines in the value
+                # trim the trailing new lines in the value:
+                my $last = $directive->{value}->[-1]->last_element;
+                #warn "LAST: '$last'\n";
+                if ($last and $last eq "\n") {
+                    $directive->{value}->[-1]->remove_child($last);
+                }
                 my $var = Makefile::AST::Variable->new($directive);
                 $ast->add_var($var);
                 undef $var_origin;
