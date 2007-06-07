@@ -110,6 +110,10 @@ sub make ($$) {
     # postpone the timestamp propagation until all individual
     # rules have been updated:
     $self->update_mtime($target);
+
+    # postpone the timestamp propagation until all individual
+    # rules have been updated:
+    $self->update_mtime($target);
     return $retval;
 }
 
