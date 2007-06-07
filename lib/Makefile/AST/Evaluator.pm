@@ -46,7 +46,7 @@ sub update_mtime ($$@) {
         ### mtime: $stat->mtime
         return ($cache->{$file} = $stat->mtime);
     } else {
-        ### file not found: $file
+        ## file not found: $file
         return ($cache->{$file} = undef);
     }
 }

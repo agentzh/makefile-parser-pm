@@ -82,13 +82,19 @@ sub parse ($$) {
     shift;
     my $ast = Makefile::AST->new;
     my $dom = MDOM::Document::Gmake->new(shift);
-    my ($var_origin, $rule, $orig_lineno, $not_a_target);
+    my ($var_origin, $rule, $orig_lineno, $not_a_target, $directive);
     for my $elem ($dom->elements) {
         ## elem class: $elem->class
         ## elem lineno: $elem->lineno
+        if ($directive and $elem->class !~ /Directive$/) {
+            # XXX yes, this is hacky
+            ### pushing value to value: $elem
+            push @{ $directive->{value} }, $elem->clone;
+            next;
+        }
         next if $elem->isa('MDOM::Token::Whitespace');
         if ($elem->isa('MDOM::Assignment')) {
-            ## Found assignment: $elem->source
+            ### Found assignment: $elem->source
             if (!$var_origin) {
                 my $lineno = $elem->lineno;
                 die "ERROR: line $lineno: No flavor found for the assignment";
@@ -123,6 +129,12 @@ sub parse ($$) {
         }
         elsif ($elem =~ /^#\s+(automatic|makefile|default|environment|command line)/) {
             $var_origin = $1;
+        }
+        elsif ($elem =~ /^# `(\S+)' directive \(from `\S+', line (\d+)\)/) {
+            $var_origin = $1;
+            $orig_lineno = $2;
+            ### directive origin: $var_origin
+            ### directive lineno: $orig_lineno
         }
         elsif ($elem =~ /^#\s+.*\(from `\S+', line (\d+)\)/) {
             $orig_lineno = $1;
@@ -211,6 +223,7 @@ sub parse ($$) {
                 #shift @tokens if $tokens[0] eq "\t";
                 #pop @tokens if $tokens[-1] eq "\n";
                 #push @{ $rule->{commands} }, \@tokens;
+                ### parser: CMD: $elem
                 my $first = $elem->first_element;
                 ## $first
                 $elem->remove_child($first)
@@ -222,6 +235,28 @@ sub parse ($$) {
         } elsif ($elem->class =~ /MDOM::Directive/) {
             ### directive name: $elem->name
             ### directive value: $elem->value
+            if ($elem->name eq 'define') {
+                # XXX set lineno to $orig_lineno here?
+                $directive = {
+                    name => $elem->value,
+                    value => [], # needs to be fed later
+                    flavor => 'recursive',
+                    origin => $var_origin,
+                    lineno => $orig_lineno,
+                };
+                next;
+            }
+            if ($elem->name eq 'endef') {
+                ### parsed a define directive: $directive
+                # XXX trim the trailing new lines in the value
+                my $var = Makefile::AST::Variable->new($directive);
+                $ast->add_var($var);
+                undef $var_origin;
+                undef $directive;
+            } else {
+                warn "warning: line " . $elem->lineno .
+                    ": Unknown directive: " . $elem->source;
+            }
         } elsif ($elem->class =~ /Unknown/) {
             # XXX Note that output from $(info ...) may skew up stdout
             # XXX This hack is used to make features/conditionals.t pass
@@ -242,13 +277,14 @@ sub parse ($$) {
         ### DEFAULT GOAL: $ast->default_goal
 
         my $rule = $ast->apply_explicit_rules('.PHONY');
-        ### PHONY RULE: $rule
-        ### phony targets: @{ $rule->normal_prereqs }
         if ($rule) {
+            ### PHONY RULE: $rule
+            ### phony targets: @{ $rule->normal_prereqs }
             for my $phony (@{ $rule->normal_prereqs }) {
                 $ast->set_phony_target($phony);
             }
         }
+        ## foo var: $ast->get_var('foo')
     }
     $ast;
 }

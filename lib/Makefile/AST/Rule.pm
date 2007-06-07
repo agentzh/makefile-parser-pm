@@ -30,11 +30,11 @@ sub as_str ($$) {
 }
 
 sub run_command ($$) {
-    my ($self, $ast, $raw_cmd) = @_;
+    my ($self, $ast, $raw_cmd,
+        $silent, $tolerant, $critical) = @_;
 
     ## $raw_cmd
     my @tokens = $raw_cmd->elements;
-    my ($silent, $tolerant, $critical);
     while ($tokens[0]->class eq 'MDOM::Token::Modifier') {
         my $modifier = shift @tokens;
         if ($modifier eq '+') {
@@ -50,10 +50,29 @@ sub run_command ($$) {
         trim_tokens(\@tokens);
     }
     local $. = $raw_cmd->lineno;
+    ## TOKENS (BEFORE): @tokens
     my $cmd = $ast->solve_refs_in_tokens(\@tokens);
     $cmd =~ s/^\s+|\s+$//gs;
     return if $cmd eq '';
     ### command: $cmd
+    if ($cmd =~ /(?<!\\)\n/sm) {
+        # it seems to be a canned sequence of commands
+        # XXX This is a hack to get things work
+        my @cmd = split /(?<!\\)\n/, $cmd;
+        my @new_cmd;
+        for (@cmd) {
+            s/^\s+|\s+$//g;
+            require MDOM::Document::Gmake;
+            @tokens = MDOM::Document::Gmake::_tokenize_command($_);
+            ### Reparsed cmd tokens: @tokens
+            my $cmd = MDOM::Command->new;
+            $cmd->__add_elements(@tokens);
+            # XXX upper-level's modifiers should take in
+            #  effect in the recursive calls:
+            $self->run_command($ast, $cmd, $silent, $tolerant, $critical);
+        }
+        return; # cut here
+    }
     if (!$Makefile::AST::Evaluator::Quiet &&
             (!$silent || $Makefile::AST::Evaluator::JustPrint)) {
         print "$cmd\n";
@@ -79,8 +98,8 @@ sub run_commands ($$) {
     my ($self, $ast) = @_;
     my @normal_prereqs = @{ $self->normal_prereqs };
     my @order_prereqs = @{ $self->order_prereqs };
-    ### @normal_prereqs
-    ### @order_prereqs
+    ## @normal_prereqs
+    ## @order_prereqs
     $ast->add_auto_var(
         '@' => [$self->target],
         '<' => [$normal_prereqs[0]], # XXX better solutions?
