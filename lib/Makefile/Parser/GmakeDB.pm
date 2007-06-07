@@ -213,6 +213,15 @@ sub parse ($$) {
                 $elem->{lineno} = $orig_lineno if $orig_lineno;
                 $rule->add_command($elem->clone); # XXX why clone?
             }
+        } elsif ($elem->class =~ /MDOM::Directive/) {
+            ### directive name: $elem->name
+            ### directive value: $elem->value
+        } elsif ($elem->class =~ /Unknown/) {
+            # XXX Note that output from $(info ...) may skew up stdout
+            #print $elem->source;
+            warn "warning: line " . $elem->lineno .
+                ": Unknown GNU make database struct: " .
+                $elem->source if $elem !~ /hello.*world/;
         }
     }
     {
