@@ -4,9 +4,9 @@ use strict;
 use warnings;
 
 #use Smart::Comments;
-my $Parent;
-our %Required;
-my %Making;
+use File::stat;
+
+# XXX put these globals to some better place
 our ($Quiet, $JustPrint, $IgnoreErrors);
 
 sub new ($$) {
@@ -15,6 +15,10 @@ sub new ($$) {
     return bless {
         ast     => $ast,
         updated => {},
+        mtime_cache => {},
+        parent_target => undef,
+        targets_making => {},
+        required_targets => {},
     }, $class;
 }
 
@@ -31,20 +35,59 @@ sub is_updated ($$) {
     $self->{updated}->{$target};
 }
 
+# update the mtime cache with -M $file
+sub update_mtime ($$@) {
+    my ($self, $file, $cache) = @_;
+    $cache ||= $self->{mtime_cache};
+    if (-e $file) {
+        my $stat = stat $file or
+            die "$0: *** stat failed on $file: $!\n";
+        ### set mtime for file: $file
+        ### mtime: $stat->mtime
+        return ($cache->{$file} = $stat->mtime);
+    } else {
+        ### file not found: $file
+        return ($cache->{$file} = undef);
+    }
+}
+
+# get -M $file from cache (if any) or set the cache
+#  key-value pair otherwise
+sub get_mtime ($$) {
+    my ($self, $file) = @_;
+    my $cache = $self->{mtime_cache};
+    if (!exists $cache->{$file}) {
+        # set the cache
+        return $self->update_mtime($file, $cache);
+    }
+    return $cache->{$file};
+}
+
+sub set_required_target ($$) {
+    my ($self, $target) = @_;
+    $self->{required_targets}->{$target} = 1;
+}
+
+sub target_is_required ($$) {
+    my ($self, $target) = @_;
+    $self->{required_targets}->{$target};
+}
+
 sub make ($$) {
     my ($self, $target) = @_;
-    if ($Making{$target}) {
+    my $making = $self->{targets_making};
+    if ($making->{$target}) {
         warn "$0: Circular $target <- $target ".
             "dependency dropped.\n";
         return 'UP_TO_DATE';
     } else {
-        $Making{$target} = 1;
+        $making->{$target} = 1;
     }
     my $retval;
     my @rules = $self->ast->apply_explicit_rules($target);
     ### number of explicit rules: scalar(@rules)
     if (@rules == 0) {
-        delete $Making{$target};
+        delete $making->{$target};
         return $self->make_by_rule($target => undef);
     }
     for my $rule (@rules) {
@@ -62,7 +105,11 @@ sub make ($$) {
         ### make_by_rule returned: $ret
         $retval = $ret if !$retval || $ret eq 'REBUILT';
     }
-    delete $Making{$target};
+    delete $making->{$target};
+
+    # postpone the timestamp propagation until all individual
+    # rules have been updated:
+    $self->update_mtime($target);
     return $retval;
 }
 
@@ -82,22 +129,24 @@ sub make_implicitly ($$) {
 }
 
 sub make_by_rule ($$$) {
-    my ($self, $goal, $rule) = @_;
-    ### make_by_rule: $goal
+    my ($self, $target, $rule) = @_;
+    ### make_by_rule: $target
     return 'UP_TO_DATE'
-        if $self->is_updated($goal) and $rule->colon eq ':';
+        if $self->is_updated($target) and $rule->colon eq ':';
+    # XXX the parent should be passed via arguments or local vars
+    my $parent = $self->{parent_target};
     if (!$rule) {
         ## HERE!
-        ## exists? : -f $goal
-        if (-f $goal) {
+        ## exists? : -f $target
+        if (-f $target) {
             return 'UP_TO_DATE';
         } else {
-            if ($Required{$goal}) {
+            if ($self->target_is_required($target)) {
                 my $msg =
-                    "$0: *** No rule to make target `$goal'";
-                if (defined $Parent) {
+                    "$0: *** No rule to make target `$target'";
+                if (defined $parent) {
                     $msg .=
-                        ", needed by `$Parent'";
+                        ", needed by `$parent'";
                 }
                 die "$msg.  Stop.\n";
             } else {
@@ -106,13 +155,14 @@ sub make_by_rule ($$$) {
         }
     }
     ### make by rule: $rule->as_str
-    my $out_of_date = !-f $goal;
+    my $target_mtime = $self->get_mtime($target);
+    my $out_of_date = !defined $target_mtime;
     my $prereq_rebuilt;
-    $Parent = $goal;
+    $self->{parent_target} = $target;
     for my $prereq (@{ $rule->normal_prereqs }) {
         # XXX handle order-only prepreqs here
         ### processing rereq: $prereq
-        $Required{$prereq} = 1;
+        $self->set_required_target($prereq);
         my $res = $self->make($prereq);
         ### make returned: $res
         if ($res and $res eq 'REBUILT') {
@@ -120,7 +170,7 @@ sub make_by_rule ($$$) {
             $prereq_rebuilt++;
         } elsif ($res and $res eq 'UP_TO_DATE') {
             if (!$out_of_date) {
-                if (-M $prereq < -M $goal) {
+                if ($self->get_mtime($prereq) > $target_mtime) {
                     ### prereq file is newer: $prereq
                     $out_of_date = 1;
                 }
@@ -129,6 +179,7 @@ sub make_by_rule ($$$) {
             die "Unexpected returned value: $res";
         }
     }
+    $self->{parent_target} = undef;
     if ($out_of_date) {
         ### firing rule's commands: $rule->as_str
         $rule->run_commands($self->ast);
