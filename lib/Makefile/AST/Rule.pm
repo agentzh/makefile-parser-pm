@@ -13,13 +13,14 @@ __PACKAGE__->mk_accessors(qw{
 });
 
 # XXX: generate description for the rule
-sub as_str ($$) {
+sub as_str ($) {
     my $self = shift;
     my $order_part = '';
-    ### as_str: order_prereqs: $self->order_prereqs
+    ## as_str: order_prereqs: $self->order_prereqs
     if (@{ $self->order_prereqs }) {
         $order_part = " | " . join(" ",@{ $self->order_prereqs });
     }
+    ### colon: $self->colon
     my $str = $self->target . " " .
             $self->colon . " " .
             join(" ", @{ $self->normal_prereqs }) . "$order_part ; " .
@@ -107,13 +108,12 @@ sub run_command ($$) {
         system($ast->eval_var_value('SHELL'), '-c', $cmd);
         if ($? != 0) {
             my $retval = $? >> 8;
-            # XXX better error message
+            my $target = $ast->get_var('@')->value->[0];
             if (!$Makefile::AST::Evaluator::IgnoreErrors &&
                     (!$tolerant || $critical)) {
                 # XXX better handling for tolerance
-                die "$::MAKE: *** [all] Error $retval\n";
+                die "$::MAKE: *** [$target] Error $retval\n";
             } else {
-                my $target = $ast->get_var('@')->value->[0];
                 warn "$::MAKE: [$target] Error $retval (ignored)\n";
             }
         }
@@ -126,6 +126,8 @@ sub run_commands ($$) {
     my @order_prereqs = @{ $self->order_prereqs };
     ## @normal_prereqs
     ## @order_prereqs
+    ### run_commands: target: $self->target
+    ### run_commands: Stem: $self->stem
     $ast->add_auto_var(
         '@' => [$self->target],
         '<' => [$normal_prereqs[0]], # XXX better solutions?
@@ -135,7 +137,7 @@ sub run_commands ($$) {
         '|' => [join(" ", List::MoreUtils::uniq(@order_prereqs))],
         # XXX add more automatic vars' defs here
     );
-    ## auto $^: $ast->get_var('^')
+    ### auto $*: $ast->get_var('*')
     for my $cmd (@{ $self->commands }) {
         $Makefile::AST::Evaluator::CmdRun = 1;
         $self->run_command($ast, $cmd);

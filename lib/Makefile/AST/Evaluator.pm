@@ -88,9 +88,14 @@ sub make ($$) {
     ### number of explicit rules: scalar(@rules)
     if (@rules == 0) {
         ### no rule matched the target: $target
+        ### trying to make implicitly here...
+        my $ret = $self->make_implicitly($target);
         delete $making->{$target};
-        # XXX try to make implicitly here?
-        return $self->make_by_rule($target => undef);
+        if (!$ret) {
+            return $self->make_by_rule($target => undef);
+        } else {
+            return $ret;
+        }
     }
     # run the double-colon rules serially or run the
     # single matched single-colon rule:
@@ -122,10 +127,15 @@ sub make ($$) {
 
 sub make_implicitly ($$) {
     my ($self, $target) = @_;
-    my $rule = $self->ast->apply_implicit_rules($target);
-    if ($rule) {
-    ### implicit rule: $rule->as_str
+    if ($self->ast->is_phony_target($target)) {
+        ### make_implicitly skipped target since it's phony: $target
+        return undef;
     }
+    my $rule = $self->ast->apply_implicit_rules($target);
+    if (!$rule) {
+        return undef;
+    }
+    ### implicit rule: $rule->as_str
     my $retval = $self->make_by_rule($target => $rule);
     if ($retval eq 'REBUILT') {
         for my $target ($rule->other_targets) {
@@ -137,11 +147,12 @@ sub make_implicitly ($$) {
 
 sub make_by_rule ($$$) {
     my ($self, $target, $rule) = @_;
-    ### make_by_rule: $target
+    ### make_by_rule (target): $target
     return 'UP_TO_DATE'
         if $self->is_updated($target) and $rule->colon eq ':';
     # XXX the parent should be passed via arguments or local vars
     my $parent = $self->{parent_target};
+    ## Retrieving parent target: $parent
     if (!$rule) {
         ## HERE!
         ## exists? : -f $target
@@ -161,12 +172,14 @@ sub make_by_rule ($$$) {
             }
         }
     }
-    ### make by rule: $rule->as_str
+    ### make by rule (rule): $rule->as_str
+    ### stem: $rule->stem
     my $target_mtime = $self->get_mtime($target);
     my $out_of_date =
         $self->ast->is_phony_target($target) ||
         !defined $target_mtime;
     my $prereq_rebuilt;
+    ## Setting parent target to: $target
     $self->{parent_target} = $target;
     # process normal prereqs:
     for my $prereq (@{ $rule->normal_prereqs }) {
@@ -201,6 +214,13 @@ sub make_by_rule ($$$) {
         $rule->run_commands($self->ast);
         $self->mark_as_updated($rule->target)
             if $rule->colon eq ':';
+        if (my $others = $rule->other_targets) {
+            # mark "other targets" as updated too:
+            for my $other (@$others) {
+                ### marking "other target" as updated: $other
+                $self->mark_as_updated($other);
+            }
+        }
         return 'REBUILT'
             if $rule->has_command or $prereq_rebuilt;
     }

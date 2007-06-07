@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 #use Smart::Comments;
+#use Smart::Comments '####';
 
 use Makefile::AST::StemMatch;
 use Makefile::AST::Rule::Implicit;
@@ -191,29 +192,36 @@ sub apply_implicit_rules ($$) {
 
     # XXX handle archive(member) here
 
-    ## step 2...
+    #### step 2...
     my @rules = grep { $_->match_target($target) }
                      @{ $self->implicit_rules };
-    ## @rules
+    #### rules: map { $_->as_str } @rules
     return undef if !@rules;
 
-    ## step 3...
+    #### step 3...
     if (first { ! $_->match_anything } @rules) {
         @rules = grep {
             !( $_->match_anything && !$_->is_terminal )
         } @rules;
     }
-    ## @rules
+    #### rules: map { $_->as_str } @rules
 
-    ## step 4...
+    #### step 4...
     @rules = grep { @{ $_->commands } > 0 } @rules;
-    ## @rules
+    #### rules: map { $_->as_str } @rules
 
-    ### step 5...
+    #### step 5...
+    # XXX This is hacky...not sure if it's the right
+    # XXX thing to do (it's unspec'd afaik)
+    @rules = sort {
+        -( scalar( @{ $a->normal_prereqs } ) <=>
+        scalar( @{ $b->normal_prereqs } ) )
+    } @rules;
     for my $rule (@rules) {
-        ## target: $target
+        #### target: $target
+        #### rule: $rule->as_str
         my $applied = $rule->apply($self, $target);
-        ### $applied
+        #### applied rule: $applied->as_str
         if ($applied) {
             return $applied;
         }
@@ -308,6 +316,8 @@ sub eval_var_value ($$) {
                 $var->value
             );
         } else {
+            ### don't complain about uninitialized value:
+            no warnings 'uninitialized';
             return join '', @{$var->value};
         }
     } else {

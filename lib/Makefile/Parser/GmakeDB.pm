@@ -3,6 +3,7 @@ package Makefile::Parser::GmakeDB;
 use strict;
 use warnings;
 
+#use Smart::Comments '####';
 #use Smart::Comments;
 use List::Util qw( first );
 use List::MoreUtils qw( none );
@@ -82,7 +83,8 @@ sub parse ($$) {
     shift;
     my $ast = Makefile::AST->new;
     my $dom = MDOM::Document::Gmake->new(shift);
-    my ($var_origin, $rule, $orig_lineno, $not_a_target, $directive);
+    my ($var_origin, $rule, $orig_lineno);
+    my ($not_a_target, $directive);
     for my $elem ($dom->elements) {
         ## elem class: $elem->class
         ## elem lineno: $elem->lineno
@@ -143,9 +145,26 @@ sub parse ($$) {
         elsif ($elem =~ /^# Not a target:$/) {
             $not_a_target = 1;
         }
+        elsif ($elem =~ /^#  Implicit\/static pattern stem: `(\S+)'/) {
+            #### Setting pattern stem for solved implicit rule: $1
+            $rule->{stem} = $1;
+        }
+        elsif ($elem =~ /^#  Also makes: (.*)/) {
+            my @other_targets = split /\s+/, $1;
+            $rule->{other_targets} = \@other_targets;
+            #### Setting other targets: @other_targets
+        }
         elsif ($elem->isa('MDOM::Rule::Simple')) {
             ### Found rule: $elem->source
             ### not a target? : $not_a_target
+            if ($rule) {
+                # The db output tends to produce
+                # trailing empty commands, so we remove it:
+                if ($rule->{commands}->[-1] and
+                      $rule->{commands}->[-1] eq "\n") {
+                    pop @{ $rule->{commands} };
+                }
+            }
             if ($not_a_target) {
                 $not_a_target = 0;
                 next;
@@ -171,7 +190,7 @@ sub parse ($$) {
                 none { $_ eq $value } @normal_prereqs
             } @order_prereqs if @normal_prereqs;
 
-            ### Target: $target
+            #### Target: $target
             ### Normal Prereqs: @normal_prereqs
             ### Order-only Prereqs: @order_prereqs
 
@@ -223,11 +242,15 @@ sub parse ($$) {
                 #shift @tokens if $tokens[0] eq "\t";
                 #pop @tokens if $tokens[-1] eq "\n";
                 #push @{ $rule->{commands} }, \@tokens;
-                ### parser: CMD: $elem
+                ## parser: CMD: $elem
                 my $first = $elem->first_element;
                 ## $first
                 $elem->remove_child($first)
                     if $first->class eq 'MDOM::Token::Separator';
+                ### elem source: $elem->source
+                #if ($elem->source eq "\n") {
+                #    die "Matched!";
+                #}
                 ## lineno2: $orig_lineno
                 $elem->{lineno} = $orig_lineno if $orig_lineno;
                 $rule->add_command($elem->clone); # XXX why clone?
