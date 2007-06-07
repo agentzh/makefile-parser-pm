@@ -58,7 +58,7 @@ if (!defined $MAKE) {
 ### var defs via command line: @var_defs
 
 my ($stdout, $stderr);
-run3 ['make', '-pqRr', '-f', $makefile, @var_defs], undef, \$stdout, \$stderr;
+run3 ['make', '-pqRrs', '-f', $makefile, @var_defs], undef, \$stdout, \$stderr;
 ## $stderr
 my $exit_code = $? >> 8;
 if ($stderr and $exit_code == 2 and $stderr !~ /^make:/) {
