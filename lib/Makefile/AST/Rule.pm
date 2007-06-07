@@ -66,10 +66,10 @@ sub run_command ($$) {
             if (!$Makefile::AST::Evaluator::IgnoreErrors &&
                     (!$tolerant || $critical)) {
                 # XXX better handling for tolerance
-                die "$0: *** [all] Error $retval\n";
+                die "$::MAKE: *** [all] Error $retval\n";
             } else {
                 my $target = $ast->get_var('@')->value->[0];
-                warn "$0: [$target] Error $retval (ignored)\n";
+                warn "$::MAKE: [$target] Error $retval (ignored)\n";
             }
         }
     }

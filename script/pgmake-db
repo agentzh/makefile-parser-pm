@@ -30,16 +30,8 @@ GetOptions(
 ) or die "Usage: $0 [-f makefile] goals...\n";
 ### $makefile
 ### @ARGV
-$makefile = $user_makefile;
-if (!defined $makefile) {
-    $makefile = first { -f $_ } @DefaultMakefile;
-} elsif ($makefile ne '-' and !-f $makefile) {
-    warn "$0: $makefile: No such file or directory\n";
-    push @goals, $makefile; # This is required
-}
-$makefile = 'Makefile' if !defined $makefile;
 
-my $MAKE;
+our $MAKE;
 my @var_defs;
 for my $arg (@ARGV) {
     if ($arg =~ /(.*?)=(.*)/) {
@@ -53,8 +45,20 @@ for my $arg (@ARGV) {
     }
 }
 if (!defined $MAKE) {
-    push @var_defs, "MAKE=$0";
+    ($MAKE = $0) =~ s/.*[\\\/]//;
+    push @var_defs, "MAKE=$MAKE";
 }
+
+$makefile = $user_makefile;
+if (!defined $makefile) {
+    $makefile = first { -f $_ } @DefaultMakefile;
+} elsif ($makefile ne '-' and !-f $makefile) {
+    warn "$MAKE: $makefile: No such file or directory\n";
+    push @goals, $makefile; # This is required
+}
+$makefile = 'Makefile' if !defined $makefile;
+
+
 
 ### var defs via command line: @var_defs
 
@@ -63,7 +67,7 @@ run3 ['make', '-pqRrs', '-f', $makefile, @var_defs], undef, \$stdout, \$stderr;
 ## $stderr
 my $exit_code = $? >> 8;
 if ($stderr and $exit_code == 2 and $stderr !~ /^make:/) {
-    $stderr =~ s/^make:/$0:/msg;
+    $stderr =~ s/^make:/$MAKE:/msg;
     warn $stderr;
     exit $exit_code;
 }
@@ -110,7 +114,7 @@ for my $goal (@goals) {
     ### result: $res
     if ($res and $res eq 'UP_TO_DATE' and
           !$Makefile::AST::Evaluator::CmdRun) {
-        print "$0: Nothing to be done for `$goal'.\n";
+        print "$::MAKE: Nothing to be done for `$goal'.\n";
     }
 }
 

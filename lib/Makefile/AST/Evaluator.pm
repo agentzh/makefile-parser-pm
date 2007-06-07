@@ -41,7 +41,7 @@ sub update_mtime ($$@) {
     $cache ||= $self->{mtime_cache};
     if (-e $file) {
         my $stat = stat $file or
-            die "$0: *** stat failed on $file: $!\n";
+            die "$::MAKE: *** stat failed on $file: $!\n";
         ### set mtime for file: $file
         ### mtime: $stat->mtime
         return ($cache->{$file} = $stat->mtime);
@@ -77,7 +77,7 @@ sub make ($$) {
     my ($self, $target) = @_;
     my $making = $self->{targets_making};
     if ($making->{$target}) {
-        warn "$0: Circular $target <- $target ".
+        warn "$::MAKE: Circular $target <- $target ".
             "dependency dropped.\n";
         return 'UP_TO_DATE';
     } else {
@@ -150,7 +150,7 @@ sub make_by_rule ($$$) {
         } else {
             if ($self->is_required_target($target)) {
                 my $msg =
-                    "$0: *** No rule to make target `$target'";
+                    "$::MAKE: *** No rule to make target `$target'";
                 if (defined $parent) {
                     $msg .=
                         ", needed by `$parent'";
