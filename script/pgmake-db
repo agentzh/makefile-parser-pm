@@ -18,10 +18,11 @@ my @DefaultMakefile = (
     'Makefile'
 );
 
+my $user_makefile;
 my ($makefile, $njobs, @goals);
 Getopt::Long::Configure ("bundling");
 GetOptions(
-    'f|file|makefile=s' => \$makefile,
+    'f|file|makefile=s' => \$user_makefile,
     'j=s' => \$njobs,  # job server is not really supported
     'n|just-print|dry-run|recon' => \$Makefile::AST::Evaluator::JustPrint,
     's|silent|quiet'  => \$Makefile::AST::Evaluator::Quiet,
@@ -29,12 +30,12 @@ GetOptions(
 ) or die "Usage: $0 [-f makefile] goals...\n";
 ### $makefile
 ### @ARGV
+$makefile = $user_makefile;
 if (!defined $makefile) {
     $makefile = first { -f $_ } @DefaultMakefile;
 } elsif ($makefile ne '-' and !-f $makefile) {
     warn "$0: $makefile: No such file or directory\n";
     push @goals, $makefile; # This is required
-    $Makefile::AST::Evaluator::Required{$makefile} = 1;
 }
 $makefile = 'Makefile' if !defined $makefile;
 
@@ -100,6 +101,8 @@ $ast->{makefile} = $makefile;
 push @goals, $ast->default_goal if !@goals;
 ### @goals
 my $eval = Makefile::AST::Evaluator->new($ast);
+$eval->set_required_target($user_makefile)
+    if defined $user_makefile;
 for my $goal (@goals) {
     ### goal: $goal
     my $res = $eval->make($goal);
