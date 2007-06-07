@@ -35,8 +35,16 @@ sub run_command ($$) {
 
     ## $raw_cmd
     my @tokens = $raw_cmd->elements;
-    while ($tokens[0]->class eq 'MDOM::Token::Modifier') {
-        my $modifier = shift @tokens;
+
+    # try to recognize modifiers:
+    my $modifier;
+    while (@tokens) {
+        if ($tokens[0]->class eq 'MDOM::Token::Whitespace') {
+            shift @tokens;
+            next;
+        }
+        last unless $tokens[0]->class eq 'MDOM::Token::Modifier';
+        $modifier = shift @tokens;
         if ($modifier eq '+') {
             # XXX is this the right thing to do?
             $critical = 1;
@@ -47,14 +55,32 @@ sub run_command ($$) {
         } else {
             die "Unknown modifier: $modifier";
         }
-        trim_tokens(\@tokens);
     }
     local $. = $raw_cmd->lineno;
     ## TOKENS (BEFORE): @tokens
     my $cmd = $ast->solve_refs_in_tokens(\@tokens);
+    ### cmd after solve (1): $cmd
+
+    if (!defined $modifier) {
+        while (1) {
+            if ($cmd =~ s/^\s*\+//) {
+                # XXX is this the right thing to do?
+                $critical = 1;
+            } elsif ($cmd =~ s/^\s*-//) {
+                $tolerant = 1;
+            } elsif ($cmd =~ s/^\s*\@//) {
+                    $silent = 1;
+            } else {
+                last;
+            }
+        }
+    }
     $cmd =~ s/^\s+|\s+$//gs;
     return if $cmd eq '';
-    ### command: $cmd
+    ### cmd after modifier extraction: $cmd
+    ### critical (+): $critical
+    ### tolerant (-): $tolerant
+    ### silent (@): $silent
     if ($cmd =~ /(?<!\\)\n/sm) {
         # it seems to be a canned sequence of commands
         # XXX This is a hack to get things work
