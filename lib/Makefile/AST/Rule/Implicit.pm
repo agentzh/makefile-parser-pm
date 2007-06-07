@@ -37,10 +37,11 @@ sub match_target ($$) {
 # apply the current rule to the given target
 sub apply ($$$@) {
     my ($self, $ast, $target, $opts) = @_;
+    ### applying implicit rule to target: $target
     my $recursive;
     $recursive = $opts->{recursive} if $opts;
     my $match = $self->match_target($target);
-    ### $match
+    ## $match
     return undef if !$match;
     my (@other_targets, @normal_prereqs, @order_prereqs);
     for (@{ $self->targets }) {

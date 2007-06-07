@@ -35,8 +35,19 @@ sub new ($@) {
         named_scopes   => {}, # hooks for target-specific
                               # variables
         targets        => {},
+        phony_targets => {},
         makefile       => $makefile,
     }, $class;
+}
+
+sub is_phony_target ($$) {
+    my ($self, $target) = @_;
+    $self->{phony_targets}->{$target};
+}
+
+sub set_phony_target ($$) {
+    my ($self, $target) = @_;
+    $self->{phony_targets}->{$target} = 1;
 }
 
 sub target_exists ($$) {

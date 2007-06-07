@@ -5,6 +5,7 @@ use warnings;
 
 #use Smart::Comments;
 use List::Util qw( first );
+use List::MoreUtils qw( none );
 use MDOM::Document::Gmake;
 use Makefile::AST;
 
@@ -139,24 +140,32 @@ sub parse ($$) {
             }
             my $targets = $elem->targets;
             my $colon   = $elem->colon;
-            my $prereqs = $elem->prereqs;
+            my $normal_prereqs = $elem->normal_prereqs;
+            my $order_prereqs = $elem->order_prereqs;
             my $command = $elem->command;
 
             ## Target (raw): $targets
             ## Prereq (raw): $prereqs
 
             my $target = join '', @$targets;
-            my @prereqs =  split /\s+/, join '', @$prereqs;
+            my @order_prereqs =  split /\s+/, join '', @$order_prereqs;
+            my @normal_prereqs =  split /\s+/, join '', @$normal_prereqs;
 
             # Solve escaped chars:
             solve_escaped(\$target);
-            map { solve_escaped(\$_) } @prereqs;
+            map { solve_escaped(\$_) } @normal_prereqs, @order_prereqs;
+            @order_prereqs = grep {
+                my $value = $_;
+                none { $_ eq $value } @normal_prereqs
+            } @order_prereqs if @normal_prereqs;
 
             ### Target: $target
-            ### Prereqs: @prereqs
+            ### Normal Prereqs: @normal_prereqs
+            ### Order-only Prereqs: @order_prereqs
 
-            map { $_ = "$_" } @$prereqs;
-            if ($target !~ /\s/ and $target !~ /\%/ and !@prereqs) {
+            #map { $_ = "$_" } @normal_prereqs, @order_prereqs;
+            # XXX suffix rules allow order-only prepreqs? not sure...
+            if ($target !~ /\s/ and $target !~ /\%/ and !@normal_prereqs and !@order_prereqs) {
                 ## try to recognize suffix rule: $target
                 my ($fst, $snd);
                 $fst = _match_suffix($target, 1);
@@ -167,32 +176,29 @@ sub parse ($$) {
                     if (defined $fst) {
                         ## found suffix rule/2: $target
                         $target = '%' . $snd;
-                        @prereqs = ('%' . $fst);
+                        @normal_prereqs = ('%' . $fst);
                     }
                 } else {
                     ## found suffix rule rule/1: $target
                     $target = '%' . $fst;
                 }
             }
+            my $rule_struct = {
+                order_prereqs => [],
+                normal_prereqs => \@normal_prereqs,
+                order_prereqs => \@order_prereqs,
+                commands => [defined $command ? $command : ()],
+                colon => $colon,
+            };
             if ($target =~ /\%/) {
                 ## implicit rule found: $target
                 my $targets = [split /\s+/, $target];
-                $rule = Makefile::AST::Rule::Implicit->new({
-                            targets => $targets,
-                            order_prereqs => [],
-                            normal_prereqs => \@prereqs,
-                            commands => [defined $command ? $command : ()],
-                            colon => $colon,
-                        });
+                $rule_struct->{targets} = $targets,
+                $rule = Makefile::AST::Rule::Implicit->new($rule_struct);
                 $ast->add_implicit_rule($rule);
             } else {
-                $rule = Makefile::AST::Rule->new({
-                    target => $target,
-                    order_prereqs  => [],
-                    normal_prereqs => \@prereqs,
-                    commands => [defined $command ? $command : ()],
-                    colon    => $colon,
-                });
+                $rule_struct->{target} = $target;
+                $rule = Makefile::AST::Rule->new($rule_struct);
                 $ast->add_explicit_rule($rule);
             }
         } elsif ($elem->isa('MDOM::Command')) {
@@ -230,6 +236,15 @@ sub parse ($$) {
         ## default goal's value: $var
         $ast->{default_goal} = $token if $token;
         ### DEFAULT GOAL: $ast->default_goal
+
+        my $rule = $ast->apply_explicit_rules('.PHONY');
+        ### PHONY RULE: $rule
+        ### phony targets: @{ $rule->normal_prereqs }
+        if ($rule) {
+            for my $phony (@{ $rule->normal_prereqs }) {
+                $ast->set_phony_target($phony);
+            }
+        }
     }
     $ast;
 }

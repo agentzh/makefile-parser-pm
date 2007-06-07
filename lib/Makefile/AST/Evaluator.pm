@@ -87,20 +87,23 @@ sub make ($$) {
     my @rules = $self->ast->apply_explicit_rules($target);
     ### number of explicit rules: scalar(@rules)
     if (@rules == 0) {
+        ### no rule matched the target: $target
         delete $making->{$target};
+        # XXX try to make implicitly here?
         return $self->make_by_rule($target => undef);
     }
+    # run the double-colon rules serially or run the
+    # single matched single-colon rule:
     for my $rule (@rules) {
         my $ret;
         ### explicit rule for: $target
         ### explicit rule: $rule->as_str
-        if (!$rule->has_command) {
-            ## THERE!!!
+        if (!$rule->has_command) { # XXX is this really necessary?
+            ### The explicit rule has no command, so
+            ### trying to make implicitly...
             $ret = $self->make_implicitly($target);
-            ### make_implicitly returned: $ret
             $retval = $ret if !$retval || $ret eq 'REBUILT';
         }
-        # XXX unconditional?
         $ret = $self->make_by_rule($target => $rule);
         ### make_by_rule returned: $ret
         $retval = $ret if !$retval || $ret eq 'REBUILT';
@@ -160,9 +163,12 @@ sub make_by_rule ($$$) {
     }
     ### make by rule: $rule->as_str
     my $target_mtime = $self->get_mtime($target);
-    my $out_of_date = !defined $target_mtime;
+    my $out_of_date =
+        $self->ast->is_phony_target($target) ||
+        !defined $target_mtime;
     my $prereq_rebuilt;
     $self->{parent_target} = $target;
+    # process normal prereqs:
     for my $prereq (@{ $rule->normal_prereqs }) {
         # XXX handle order-only prepreqs here
         ### processing rereq: $prereq
@@ -180,8 +186,14 @@ sub make_by_rule ($$$) {
                 }
             }
         } else {
-            die "Unexpected returned value: $res";
+            die "make_by_rule: Unexpected returned value for prereq $prereq: $res";
         }
+    }
+    # process order-only prepreqs:
+    for my $prereq (@{ $rule->order_prereqs }) {
+        ## process order-only prereq: $prereq
+        $self->set_required_target($prereq);
+        $self->make($prereq);
     }
     $self->{parent_target} = undef;
     if ($out_of_date) {
