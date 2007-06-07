@@ -68,7 +68,7 @@ sub set_required_target ($$) {
     $self->{required_targets}->{$target} = 1;
 }
 
-sub target_is_required ($$) {
+sub is_required_target ($$) {
     my ($self, $target) = @_;
     $self->{required_targets}->{$target};
 }
@@ -145,7 +145,7 @@ sub make_by_rule ($$$) {
         if (-f $target) {
             return 'UP_TO_DATE';
         } else {
-            if ($self->target_is_required($target)) {
+            if ($self->is_required_target($target)) {
                 my $msg =
                     "$0: *** No rule to make target `$target'";
                 if (defined $parent) {
