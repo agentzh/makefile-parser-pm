@@ -56,9 +56,6 @@ if (!defined $makefile) {
     warn "$MAKE: $makefile: No such file or directory\n";
     push @goals, $makefile; # This is required
 }
-$makefile = 'Makefile' if !defined $makefile;
-
-
 
 ### var defs via command line: @var_defs
 
@@ -101,9 +98,16 @@ $ast->{makefile} = $makefile;
 ## var b: $ast->get_var('b')
 #die;
 
-
-push @goals, $ast->default_goal if !@goals;
+my $default_goal = $ast->default_goal;
+push @goals, $ast->default_goal
+    if !@goals && defined $default_goal;
 ### @goals
+
+if (!@goals && !defined $makefile) {
+    warn "$MAKE: *** No targets specified and no makefile found.  Stop.\n";
+    exit(2);
+}
+
 my $eval = Makefile::AST::Evaluator->new($ast);
 $eval->set_required_target($user_makefile)
     if defined $user_makefile;
