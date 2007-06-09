@@ -306,10 +306,9 @@ sub parse ($$) {
         }
     }
     {
-        my $var = $ast->get_var('.DEFAULT_GOAL');
-        my $token = join "", @{ $var->value };
+        my $default = $ast->eval_var_value('.DEFAULT_GOAL');
         ## default goal's value: $var
-        $ast->{default_goal} = $token if $token;
+        $ast->{default_goal} = $default if $default;
         ### DEFAULT GOAL: $ast->default_goal
 
         my $rule = $ast->apply_explicit_rules('.PHONY');

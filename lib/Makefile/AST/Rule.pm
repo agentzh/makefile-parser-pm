@@ -108,7 +108,7 @@ sub run_command ($$) {
         system($ast->eval_var_value('SHELL'), '-c', $cmd);
         if ($? != 0) {
             my $retval = $? >> 8;
-            my $target = $ast->get_var('@')->value->[0];
+            my $target = $ast->eval_var_value('@');
             if (!$Makefile::AST::Evaluator::IgnoreErrors &&
                     (!$tolerant || $critical)) {
                 # XXX better handling for tolerance
