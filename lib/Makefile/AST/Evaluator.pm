@@ -15,7 +15,7 @@ sub new ($$) {
     return bless {
         ast     => $ast,
         updated => {},
-        mtime_cache => {},
+        mtime_cache => {},  # this is better for the AST?
         parent_target => undef,
         targets_making => {},
         required_targets => {},
@@ -30,6 +30,7 @@ sub mark_as_updated ($$) {
     $self->{updated}->{$target} = 1;
 }
 
+# XXX this should be moved to the AST
 sub is_updated ($$) {
     my ($self, $target) = @_;
     $self->{updated}->{$target};

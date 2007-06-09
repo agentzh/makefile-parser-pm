@@ -30,11 +30,11 @@ sub new ($@) {
     return bless {
         explicit_rules => {},
         implicit_rules => [],
-        current_scopes => [{}], # the last scope is
-                                # the default GLOBAL
-                                #  scope
-        named_scopes   => {}, # hooks for target-specific
-                              # variables
+        pad_stack => [{}], # the last scope is
+                           # the default GLOBAL
+                           #  scope
+        named_pads   => {}, # hooks for target-specific
+                            # variables
         targets        => {},
         phony_targets => {},
         makefile       => $makefile,
@@ -53,6 +53,7 @@ sub set_phony_target ($$) {
 
 sub target_exists ($$) {
     # XXX provide hooks for mocking file systems
+    # XXX access the mtime cache instead in the future
     -e $_[0];
 }
 
@@ -70,7 +71,7 @@ sub apply_explicit_rules ($$) {
 
 sub get_var ($$) {
     my ($self, $name) = @_;
-    my $scopes = $self->{current_scopes};
+    my $scopes = $self->{pad_stack};
     for my $scope (@$scopes) {
         if (my $var = $scope->{$name}) {
             return $var;
@@ -82,21 +83,22 @@ sub get_var ($$) {
 # XXX sub find_var
 # find_var(name => $name, flavor => $flavor)
 
-sub enter_scope ($@) {
+# enter the pad for a lexical scope
+sub enter_pad ($@) {
     my ($self, $name) = @_;
     my $scope;
     if (defined $name) {
         my $scope =
-            $self->{named_scopes}->{$name} ||= {};
+            $self->{named_pads}->{$name} ||= {};
     } else {
         $scope = {};
     }
-    unshift @{ $self->{current_scopes} }, $scope;
+    unshift @{ $self->{pad_stack} }, $scope;
 }
 
-sub leave_scope ($) {
+sub leave_pad ($) {
     my ($self) = @_;
-    my $scopes = $self->{current_scopes};
+    my $scopes = $self->{pad_stack};
     shift @$scopes if @$scopes > 1;
 }
 
@@ -104,7 +106,7 @@ sub add_var ($$) {
     my ($self, $var) = @_;
     # XXX variable overridding check
     ## variable name: $var->name()
-    $self->{current_scopes}->[0]->{$var->name()} = $var;
+    $self->{pad_stack}->[0]->{$var->name()} = $var;
 }
 
 sub add_auto_var ($$$@) {

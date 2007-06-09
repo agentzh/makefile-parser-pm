@@ -6,6 +6,7 @@ use base 'Class::Accessor::Fast';
 
 __PACKAGE__->mk_accessors(qw{
     name value flavor origin
+    lineno file
 });
 
 1;

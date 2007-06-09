@@ -84,7 +84,8 @@ sub parse ($$) {
     shift;
     my $ast = Makefile::AST->new;
     my $dom = MDOM::Document::Gmake->new(shift);
-    my ($var_origin, $rule, $orig_lineno);
+    my ($var_origin, $orig_lineno, $orig_file);
+    my $rule; # The last rule in the context
     my ($not_a_target, $directive);
     for my $elem ($dom->elements) {
         ## elem class: $elem->class
@@ -125,22 +126,25 @@ sub parse ($$) {
                     flavor => $flavor,
                     origin => $var_origin,
                     value  => \@value_tokens,
+                    lineno => $orig_lineno,
+                    file => $orig_file,
                 });
                 $ast->add_var($var);
                 undef $var_origin;
             }
         }
         elsif ($elem =~ /^#\s+(automatic|makefile|default|environment|command line)/) {
+            # XXX change the 'makefile' flavor to 'file' so as
+            # XXX to conform with the GNU make manual
             $var_origin = $1;
         }
-        elsif ($elem =~ /^# `(\S+)' directive \(from `\S+', line (\d+)\)/) {
-            $var_origin = $1;
-            $orig_lineno = $2;
+        elsif ($elem =~ /^# `(\S+)' directive \(from `(\S+)', line (\d+)\)/) {
+            ($var_origin, $orig_file, $orig_lineno) = ($1, $2, $3);
             ### directive origin: $var_origin
             ### directive lineno: $orig_lineno
         }
-        elsif ($elem =~ /^#\s+.*\(from `\S+', line (\d+)\)/) {
-            $orig_lineno = $1;
+        elsif ($elem =~ /^#\s+.*\(from `(\S+)', line (\d+)\)/) {
+            ($orig_file, $orig_lineno) = ($1, $2);
             ## lineno: $orig_lineno
         }
         elsif ($elem =~ /^# Not a target:$/) {
@@ -269,6 +273,7 @@ sub parse ($$) {
                     flavor => 'recursive',
                     origin => $var_origin,
                     lineno => $orig_lineno,
+                    file => $orig_file,
                 };
                 next;
             }
