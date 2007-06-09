@@ -10,6 +10,7 @@ use List::MoreUtils qw( none );
 use MDOM::Document::Gmake;
 use Makefile::AST;
 
+# XXX This should not be hard-coded this way...
 our @Suffixes = (
     '.out',
     '.a',
@@ -233,6 +234,7 @@ sub parse ($$) {
                 $ast->add_explicit_rule($rule);
             }
         } elsif ($elem->isa('MDOM::Command')) {
+            ### Found command: $elem
             if (!$rule) {
                 die "error: line " . $elem->lineno .
                     ": Command not allowed here";
@@ -254,6 +256,7 @@ sub parse ($$) {
                 ## lineno2: $orig_lineno
                 $elem->{lineno} = $orig_lineno if $orig_lineno;
                 $rule->add_command($elem->clone); # XXX why clone?
+                ### Command added: $elem->content
             }
         } elsif ($elem->class =~ /MDOM::Directive/) {
             ### directive name: $elem->name

@@ -308,7 +308,7 @@ sub _split_args($$$$) {
 sub eval_var_value ($$) {
     my ($self, $name) = @_;
     if (my $var = $self->get_var($name)) {
-        ### $var
+        ### eval_var_value: $var
         if ($var->flavor eq 'recursive') {
             ## HERE! eval_var_value
             ## eval recursive var: $var
@@ -316,7 +316,7 @@ sub eval_var_value ($$) {
                 $var->value
             );
         } else {
-            ### don't complain about uninitialized value:
+            # don't complain about uninitialized value:
             no warnings 'uninitialized';
             return join '', @{$var->value};
         }
@@ -682,7 +682,7 @@ sub solve_refs_in_tokens ($$) {
     my @new_tokens;
     for my $token (@$tokens) {
         if (!ref $token or !$token->isa('MDOM::Token::Interpolation')) {
-            ### non-ref token: $token
+            ### solve_refs: non-var-ref token: $token
             push @new_tokens, $token;
             next;
         }
