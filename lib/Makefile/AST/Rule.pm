@@ -62,20 +62,6 @@ sub run_command ($$) {
     my $cmd = $ast->solve_refs_in_tokens(\@tokens);
     ### cmd after solve (1): $cmd
 
-    if (!defined $modifier) {
-        while (1) {
-            if ($cmd =~ s/^\s*\+//) {
-                # XXX is this the right thing to do?
-                $critical = 1;
-            } elsif ($cmd =~ s/^\s*-//) {
-                $tolerant = 1;
-            } elsif ($cmd =~ s/^\s*\@//) {
-                    $silent = 1;
-            } else {
-                last;
-            }
-        }
-    }
     $cmd =~ s/^\s+|\s+$//gs;
     return if $cmd eq '';
     ### cmd after modifier extraction: $cmd
@@ -100,6 +86,21 @@ sub run_command ($$) {
         }
         return; # cut here
     }
+    while (1) {
+        if ($cmd =~ s/^\s*\+//) {
+            # XXX is this the right thing to do?
+            $critical = 1;
+        } elsif ($cmd =~ s/^\s*-//) {
+            $tolerant = 1;
+        } elsif ($cmd =~ s/^\s*\@//) {
+                $silent = 1;
+        } else {
+            last;
+        }
+    }
+    $cmd =~ s/^\s+|\s+$//gs;
+    return if $cmd eq '';
+
     if (!$Makefile::AST::Evaluator::Quiet &&
             (!$silent || $Makefile::AST::Evaluator::JustPrint)) {
         print "$cmd\n";
