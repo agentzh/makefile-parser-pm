@@ -6,6 +6,7 @@ use base 'Class::Accessor::Fast';
 
 __PACKAGE__->mk_ro_accessors(qw{
     normal_prereqs order_prereqs commands colon
+    target
 });
 
 sub add_command ($$) {

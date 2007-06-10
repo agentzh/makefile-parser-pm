@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 #use Smart::Comments '####';
-#use Smart::Comments;
+#use Smart::Comments '###', '####';
 use List::Util qw( first );
 use List::MoreUtils qw( none );
 use MDOM::Document::Gmake;
@@ -87,9 +87,28 @@ sub parse ($$) {
     my ($var_origin, $orig_lineno, $orig_file);
     my $rule; # The last rule in the context
     my ($not_a_target, $directive);
+    my $db_section = 'null';
+    my $next_var_lineno = 0; # lineno for the next var assignment
     for my $elem ($dom->elements) {
         ## elem class: $elem->class
         ## elem lineno: $elem->lineno
+        ## NEXT VAR LINENO: $next_var_lineno
+        ## CURRENT LINENO: $elem->lineno
+        if ($elem =~ /^# Variables$/) {
+            ### Setting DB section to 'var': $elem->content
+            $db_section = 'var';
+            next;
+        }
+        if ($elem =~ /^# (?:Implicit Rules|Directives|Files)$/) {
+            ### Setting DB section to 'rule': $elem->content
+            $db_section = 'rule';
+            next;
+        }
+        if ($elem =~ /^# (?:Pattern-specific Variable Values)$/) {
+            ### Setting DB section to 'patspec': $elem->content
+            $db_section = 'patspec';
+            next;
+        }
         if ($directive and $elem->class !~ /Directive$/) {
             # XXX yes, this is hacky
             ### pushing value to value: $elem
@@ -97,8 +116,8 @@ sub parse ($$) {
             next;
         }
         next if $elem->isa('MDOM::Token::Whitespace');
-        if ($elem->isa('MDOM::Assignment')) {
-            ### Found assignment: $elem->source
+        if ($db_section eq 'var' and $elem->isa('MDOM::Assignment')) {
+            ## Found assignment: $elem->source
             if (!$var_origin) {
                 my $lineno = $elem->lineno;
                 die "ERROR: line $lineno: No flavor found for the assignment";
@@ -134,12 +153,13 @@ sub parse ($$) {
             }
         }
         elsif ($elem =~ /^#\s+(automatic|makefile|default|environment|command line)/) {
-            # XXX change the 'makefile' flavor to 'file' so as
-            # XXX to conform with the GNU make manual
             $var_origin = $1;
+            $var_origin = 'file' if $var_origin eq 'makefile';
+            $next_var_lineno = $elem->lineno + 1;
         }
         elsif ($elem =~ /^# `(\S+)' directive \(from `(\S+)', line (\d+)\)/) {
             ($var_origin, $orig_file, $orig_lineno) = ($1, $2, $3);
+            $next_var_lineno = $elem->lineno + 1;
             ### directive origin: $var_origin
             ### directive lineno: $orig_lineno
         }
@@ -147,19 +167,55 @@ sub parse ($$) {
             ($orig_file, $orig_lineno) = ($1, $2);
             ## lineno: $orig_lineno
         }
-        elsif ($elem =~ /^# Not a target:$/) {
+        elsif ($db_section eq 'rule' and $elem =~ /^# Not a target:$/) {
             $not_a_target = 1;
         }
         elsif ($elem =~ /^#  Implicit\/static pattern stem: `(\S+)'/) {
             #### Setting pattern stem for solved implicit rule: $1
             $rule->{stem} = $1;
         }
-        elsif ($elem =~ /^#  Also makes: (.*)/) {
+        elsif ($db_section eq 'rule' and $elem =~ /^#  Also makes: (.*)/) {
             my @other_targets = split /\s+/, $1;
             $rule->{other_targets} = \@other_targets;
             #### Setting other targets: @other_targets
         }
-        elsif ($elem->isa('MDOM::Rule::Simple')) {
+        elsif ($db_section ne 'var' and
+            $next_var_lineno == $elem->lineno and
+            $elem =~ /^# (\S.*?) (:=|\?=|\+=|=) (.*)/) {
+            #die "HERE!";
+            my ($name, $op, $value) = ($1, $2, $3);
+            # XXX tokenize the $value here?
+            if (!$rule) {
+                die "error: target/parttern-specific variables found where there is no rule in the context";
+            }
+            my $flavor;
+            if ($op eq ':=') {
+                $flavor = 'simple';
+            } else {
+                # XXX we should treat '?=' and '+=' specifically here?
+                $flavor = 'recursive';
+            }
+            #### Adding local variable: $name
+            my $handle = sub {
+                my $ast = shift;
+                my $old_value = $ast->eval_var_value($name);
+                #warn "VALUE!!! $value";
+                $value = "$old_value $value" if $op eq '+=';
+                my $var = Makefile::AST::Variable->new({
+                    name => $name,
+                    flavor => $flavor,
+                    origin => $var_origin,
+                    value => $flavor eq 'recursive' ? $value : [$value],
+                    lineno => $orig_lineno,
+                    file => $orig_file,
+                });
+                $ast->enter_pad();
+                $ast->add_var($var);
+            };
+            $ast->add_pad_trigger($rule->target => $handle);
+            undef $var_origin;
+        }
+        elsif ($db_section ne 'var' and $elem->isa('MDOM::Rule::Simple')) {
             ### Found rule: $elem->source
             ### not a target? : $not_a_target
             if ($rule) {
@@ -225,20 +281,20 @@ sub parse ($$) {
                 order_prereqs => \@order_prereqs,
                 commands => [defined $command ? $command : ()],
                 colon => $colon,
+                target => $target,
             };
             if ($target =~ /\%/) {
                 ## implicit rule found: $target
                 my $targets = [split /\s+/, $target];
                 $rule_struct->{targets} = $targets,
                 $rule = Makefile::AST::Rule::Implicit->new($rule_struct);
-                $ast->add_implicit_rule($rule);
+                $ast->add_implicit_rule($rule) if $db_section eq 'rule';
             } else {
-                $rule_struct->{target} = $target;
                 $rule = Makefile::AST::Rule->new($rule_struct);
-                $ast->add_explicit_rule($rule);
+                $ast->add_explicit_rule($rule) if $db_section eq 'rule';
             }
         } elsif ($elem->isa('MDOM::Command')) {
-            ### Found command: $elem
+            ## Found command: $elem
             if (!$rule) {
                 die "error: line " . $elem->lineno .
                     ": Command not allowed here";

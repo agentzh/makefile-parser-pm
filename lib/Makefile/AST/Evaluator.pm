@@ -173,8 +173,19 @@ sub make_by_rule ($$$) {
             }
         }
     }
-    ### make by rule (rule): $rule->as_str
+    ### make_by_rule (rule): $rule->as_str
     ### stem: $rule->stem
+
+    # XXX solve pattern-specific variables here...
+
+    # enter pads for target-specific variables:
+    # XXX in order to solve '+=' and '?=',
+    # XXX we actually should NOT call enter pad
+    # XXX directly here...
+    my $saved_stack_len = $self->ast->pad_stack_len;
+    $self->ast->enter_pad($rule->target);
+    ## pad stack: $self->ast->{pad_stack}->[0]
+
     my $target_mtime = $self->get_mtime($target);
     my $out_of_date =
         $self->ast->is_phony_target($target) ||
@@ -222,9 +233,15 @@ sub make_by_rule ($$$) {
                 $self->mark_as_updated($other);
             }
         }
+        $self->ast->leave_pad(
+            $self->ast->pad_stack_len - $saved_stack_len
+        );
         return 'REBUILT'
             if $rule->has_command or $prereq_rebuilt;
     }
+    $self->ast->leave_pad(
+        $self->ast->pad_stack_len - $saved_stack_len
+    );
     return 'UP_TO_DATE';
 }
 

@@ -35,6 +35,7 @@ sub new ($@) {
                            #  scope
         named_pads   => {}, # hooks for target-specific
                             # variables
+        pad_triggers => {},
         targets        => {},
         phony_targets => {},
         makefile       => $makefile,
@@ -86,26 +87,58 @@ sub get_var ($$) {
 # enter the pad for a lexical scope
 sub enter_pad ($@) {
     my ($self, $name) = @_;
-    my $scope;
+    #### Entering pad named: $name
+    my $stack = $self->{pad_stack};
+    my $pad;
     if (defined $name) {
-        my $scope =
+        $pad =
             $self->{named_pads}->{$name} ||= {};
     } else {
-        $scope = {};
+        $pad = {};
     }
-    unshift @{ $self->{pad_stack} }, $scope;
+    unshift @$stack, $pad;
+    if (defined $name) {
+        my $list = $self->{pad_triggers}->{$name};
+        if ($list) {
+            for my $trigger (@$list) {
+                #### Firing pad trigger for: $name
+                $trigger->($self);
+            }
+        }
+    }
 }
 
-sub leave_pad ($) {
-    my ($self) = @_;
-    my $scopes = $self->{pad_stack};
-    shift @$scopes if @$scopes > 1;
+sub leave_pad ($@) {
+    my ($self, $count) = @_;
+    #### Leaving pad...
+    my $stack = $self->{pad_stack};
+    $count = 1 if !defined $count;
+    for (1..$count) {
+        shift @$stack if @$stack > 1;
+    }
+}
+
+sub pad_stack_len ($) {
+    scalar(@{ $_[0]->{pad_stack} });
+}
+
+sub add_pad_trigger ($$$) {
+    my ($self, $name, $sub) = @_;
+    my $list = $self->{pad_triggers}->{$name} ||= [];
+    push @$list, $sub;
 }
 
 sub add_var ($$) {
     my ($self, $var) = @_;
     # XXX variable overridding check
     ## variable name: $var->name()
+    if (!ref $var->value) {
+        $var->value(
+            [MDOM::Document::Gmake::_tokenize_command(
+                $var->value
+            )]
+        );
+    }
     $self->{pad_stack}->[0]->{$var->name()} = $var;
 }
 
