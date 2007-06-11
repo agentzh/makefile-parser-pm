@@ -5,7 +5,7 @@ use warnings;
 use lib qw(/home/agentz/gmake-db/lib /home/agentz/mdom-gmake/lib);
 
 #use Smart::Comments;
-use Smart::Comments '####';
+#use Smart::Comments '####';
 use Getopt::Long;
 use Makefile::Parser::GmakeDB;
 use IPC::Run3;
@@ -121,7 +121,7 @@ if (!@goals && !defined $makefile) {
     exit(2);
 }
 
-#push @goals, keys %{ $ast->targets };
+push @goals, keys %{ $ast->targets };
 
 $ast->add_var(Makefile::AST::Variable->new({
     name => 'MAKE',
@@ -132,7 +132,8 @@ $ast->add_var(Makefile::AST::Variable->new({
 my $eval = Makefile::AST::Evaluator->new($ast);
 
 my @simple_rules;
-my @str;
+my @str_for_default;
+my @str_for_others;
 Makefile::AST::Evaluator->add_trigger(
     firing_rule => sub {
         my ($self, $rule, $ast_cmds) = @_;
@@ -141,22 +142,32 @@ Makefile::AST::Evaluator->add_trigger(
         my $str;
         my $target = $rule->target;
         my $colon = $rule->colon;
-        my @prereqs = @{ $rule->normal_prereqs };
-        $str .= $target.$colon." @prereqs\n";
+        my @normal_prereqs = @{ $rule->normal_prereqs };
+        my $normal_prereqs =
+            @normal_prereqs ? " @normal_prereqs" : '';
+        my @order_prereqs = @{ $rule->order_prereqs };
+        my $order_prereqs =
+            @order_prereqs ? " | @order_prereqs" : '';
+        $str .= $target.$colon.$normal_prereqs.$order_prereqs."\n";
         for my $cmd (@$ast_cmds) {
             $str .= "\t" . $cmd->as_str . "\n";
         }
-        push @str, $str;
+        if ($target eq $default_goal) {
+            push @str_for_default, $str;
+        } else {
+            push @str_for_others, $str;
+        }
     }
 );
 $eval->set_required_target($user_makefile)
     if defined $user_makefile;
+#warn "Default goal: $default_goal\n";
 for my $goal (@goals) {
     ### goal: $goal
     $eval->make($goal);
 }
 
-print join "\n", reverse @str;
+print join "\n", @str_for_default, @str_for_others;
 
 # XXX promote the fixes on the GNU make side
 sub patch_database {

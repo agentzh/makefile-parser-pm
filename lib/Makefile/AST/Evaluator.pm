@@ -126,9 +126,8 @@ sub make ($$) {
     # rules have been updated:
     $self->update_mtime($target);
 
-    # postpone the timestamp propagation until all individual
-    # rules have been updated:
-    $self->update_mtime($target);
+    $self->mark_as_updated($target);
+
     return $retval;
 }
 
@@ -166,7 +165,8 @@ sub make_by_rule ($$$) {
         if (-f $target) {
             return 'UP_TO_DATE';
         } else {
-            if ($self->is_required_target($target)) {
+            if ($self->is_required_target($target) &&
+                    $Makefile::AST::Runtime) {
                 my $msg =
                     "$::MAKE: *** No rule to make target `$target'";
                 if (defined $parent) {
