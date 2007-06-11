@@ -165,15 +165,21 @@ sub make_by_rule ($$$) {
         if (-f $target) {
             return 'UP_TO_DATE';
         } else {
-            if ($self->is_required_target($target) &&
-                    $Makefile::AST::Runtime) {
+            if ($self->is_required_target($target)) {
                 my $msg =
                     "$::MAKE: *** No rule to make target `$target'";
                 if (defined $parent) {
                     $msg .=
                         ", needed by `$parent'";
                 }
-                die "$msg.  Stop.\n";
+                print STDERR "$msg.";
+                if ($Makefile::AST::Runtime) {
+                    die "  Stop.\n";
+                } else {
+                    warn "  Ignored.\n";
+                    $self->mark_as_updated($target);
+                    return 'UP_TO_DATE';
+                }
             } else {
                 return 'UP_TO_DATE';
             }
@@ -202,7 +208,7 @@ sub make_by_rule ($$$) {
     # process normal prereqs:
     for my $prereq (@{ $rule->normal_prereqs }) {
         # XXX handle order-only prepreqs here
-        ### processing rereq: $prereq
+        ### processing prereq: $prereq
         $self->set_required_target($prereq);
         my $res = $self->make($prereq);
         ### make returned: $res

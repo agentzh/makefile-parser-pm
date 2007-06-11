@@ -75,10 +75,11 @@ sub apply ($$$@) {
     for my $prereq (@order_prereqs, @normal_prereqs) {
         #### Test whether the prereq exists or ought to exist: $prereq
         #### target exists? : $ast->target_exists($prereq)
+        #### file test: -e 'bar.hpp'
         #### Target ought to exists? : $ast->target_ought_to_exist($prereq)
         next if $ast->target_exists($prereq) or
             $ast->target_ought_to_exist($prereq);
-        #### Failed to passed...
+        #### Failed to pass...
         # XXX mark intermedia files here
         next if $recursive and
             $self->apply($ast, $prereq, {recursive => 1});

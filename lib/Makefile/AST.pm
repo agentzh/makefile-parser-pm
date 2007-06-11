@@ -61,16 +61,21 @@ sub set_phony_target ($$) {
 }
 
 sub target_exists ($$) {
+    my $self = shift;
     # XXX provide hooks for mocking file systems
     # XXX access the mtime cache instead in the future
-    -e $_[0];
+    my $target = shift;
+    #### Test if target exists: $target
+    #### Result: -e $target
+    return -e $target;
 }
 
 sub target_ought_to_exist ($$) {
     my ($self, $target) = @_;
-    ### Test if target ought to exist: $target
-    $self->targets->{$target} ||
-    $self->prereqs->{$target};
+    my $res = $self->targets->{$target} ||
+        $self->prereqs->{$target};
+    ### Test if $target ought to exist: $res
+    $res;
 }
 
 sub apply_explicit_rules ($$) {
@@ -260,9 +265,10 @@ sub apply_implicit_rules ($$) {
     for my $rule (@rules) {
         #### target: $target
         #### rule: $rule->as_str
+        #### file test: -e 'bar.hpp'
         my $applied = $rule->apply($self, $target);
-        #### applied rule: $applied->as_str
         if ($applied) {
+            #### applied rule: $applied->as_str
             return $applied;
         }
     }

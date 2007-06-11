@@ -121,7 +121,8 @@ if (!@goals && !defined $makefile) {
     exit(2);
 }
 
-push @goals, keys %{ $ast->targets };
+# XXX uniq @goals?
+push @goals, keys %{ $ast->targets }, keys %{ $ast->prereqs };
 
 $ast->add_var(Makefile::AST::Variable->new({
     name => 'MAKE',
