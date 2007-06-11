@@ -122,8 +122,8 @@ for my $goal (@goals) {
     $Makefile::AST::Evaluator::CmdRun = 0;
     my $res = $eval->make($goal);
     ### result: $res
-    if ($res and $res eq 'UP_TO_DATE' and !$Makefile::AST::Evaluator::CmdRun) {
-        if (!$Makefile::AST::Evaluator::Question) {
+    if ($res and $res eq 'UP_TO_DATE')  {
+        if (!$Makefile::AST::Evaluator::Question and !$Makefile::AST::Evaluator::CmdRun) {
             print "$::MAKE: Nothing to be done for `$goal'.\n";
         }
     } else {

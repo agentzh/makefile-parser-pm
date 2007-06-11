@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 #use Smart::Comments;
+#use Smart::Comments '####';
 use File::stat;
 
 # XXX put these globals to some better place
@@ -241,9 +242,9 @@ sub make_by_rule ($$$) {
         $self->ast->leave_pad(
             $self->ast->pad_stack_len - $saved_stack_len
         );
-        ### has command: $rule->has_command;
+        #### AST Commands: @ast_cmds
         return 'REBUILT'
-            if $rule->has_command or $prereq_rebuilt;
+            if @ast_cmds or $prereq_rebuilt;
     }
     $self->ast->leave_pad(
         $self->ast->pad_stack_len - $saved_stack_len
