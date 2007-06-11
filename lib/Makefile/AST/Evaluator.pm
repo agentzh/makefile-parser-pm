@@ -6,6 +6,7 @@ use warnings;
 #use Smart::Comments;
 #use Smart::Comments '####';
 use File::stat;
+use Class::Trigger qw(firing_rule);
 
 # XXX put these globals to some better place
 our (
@@ -79,6 +80,8 @@ sub is_required_target ($$) {
 
 sub make ($$) {
     my ($self, $target) = @_;
+    return 'UP_TO_DATE'
+        if $self->is_updated($target);
     my $making = $self->{targets_making};
     if ($making->{$target}) {
         warn "$::MAKE: Circular $target <- $target ".
@@ -226,6 +229,7 @@ sub make_by_rule ($$$) {
     $self->{parent_target} = undef;
     if ($AlwaysMake || $out_of_date) {
         my @ast_cmds = $rule->prepare_commands($self->ast);
+        $self->call_trigger('firing_rule', $rule, \@ast_cmds);
         if (!$Question) {
             ### firing rule's commands: $rule->as_str
             $rule->run_commands(@ast_cmds);

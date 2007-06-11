@@ -23,7 +23,7 @@ $var = $ast->get_var('@');
 is $var->name, '@';
 is $var->flavor, 'simple';
 is $var->origin, 'automatic';
-is $var->value, 'blah';
+is $var->value->[0], 'blah';
 my $rules = $ast->implicit_rules();
 is_deeply $rules, [];
 

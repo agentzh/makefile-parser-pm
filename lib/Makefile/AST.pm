@@ -26,6 +26,7 @@ use List::MoreUtils qw( uniq pairwise ) ;
 use Cwd qw/ realpath /;
 use File::Spec;
 use MDOM::Util 'trim_tokens';
+use MDOM::Document::Gmake;
 
 # XXX better name?
 our $Runtime = undef;
@@ -214,11 +215,11 @@ sub add_implicit_rule ($$) {
     for my $target (@{ $rule->targets }) {
         # XXX better pattern recognition
         next if $target =~ /\%/;
-        $self->{targets}->{$target} = 1;
+        $self->targets->{$target} = 1;
     }
     for my $prereq (@{$rule->normal_prereqs}, @{$rule->order_prereqs}) {
         next if $prereq =~ /\%/;
-        $self->{targets}->{$prereq} = 1;
+        $self->prereqs->{$prereq} = 1;
     }
     my $list = $self->{implicit_rules};
     unshift @$list, $rule;
