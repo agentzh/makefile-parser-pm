@@ -27,6 +27,7 @@ GetOptions(
     'n|just-print|dry-run|recon' => \$Makefile::AST::Evaluator::JustPrint,
     's|silent|quiet'  => \$Makefile::AST::Evaluator::Quiet,
     'i|ignore-errors' => \$Makefile::AST::Evaluator::IgnoreErrors,
+    'B|always-make' => \$Makefile::AST::Evaluator::AlwaysMake,
 ) or die "Usage: $0 [-f makefile] goals...\n";
 ### $makefile
 ### @ARGV

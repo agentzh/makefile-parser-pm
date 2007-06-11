@@ -7,7 +7,7 @@ use warnings;
 use File::stat;
 
 # XXX put these globals to some better place
-our ($Quiet, $JustPrint, $IgnoreErrors);
+our ($Quiet, $JustPrint, $IgnoreErrors, $AlwaysMake);
 
 sub new ($$) {
     my $class = ref $_[0] ? ref shift : shift;
@@ -221,7 +221,7 @@ sub make_by_rule ($$$) {
         $self->make($prereq);
     }
     $self->{parent_target} = undef;
-    if ($out_of_date) {
+    if ($AlwaysMake || $out_of_date) {
         ### firing rule's commands: $rule->as_str
         $rule->run_commands($self->ast);
         $self->mark_as_updated($rule->target)
