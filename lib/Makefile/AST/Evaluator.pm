@@ -7,7 +7,9 @@ use warnings;
 use File::stat;
 
 # XXX put these globals to some better place
-our ($Quiet, $JustPrint, $IgnoreErrors, $AlwaysMake);
+our (
+    $Quiet, $JustPrint, $IgnoreErrors,
+    $AlwaysMake, $Question);
 
 sub new ($$) {
     my $class = ref $_[0] ? ref shift : shift;
@@ -222,8 +224,11 @@ sub make_by_rule ($$$) {
     }
     $self->{parent_target} = undef;
     if ($AlwaysMake || $out_of_date) {
-        ### firing rule's commands: $rule->as_str
-        $rule->run_commands($self->ast);
+        my @ast_cmds = $rule->prepare_commands($self->ast);
+        if (!$Question) {
+            ### firing rule's commands: $rule->as_str
+            $rule->run_commands(@ast_cmds);
+        }
         $self->mark_as_updated($rule->target)
             if $rule->colon eq ':';
         if (my $others = $rule->other_targets) {
@@ -236,6 +241,7 @@ sub make_by_rule ($$$) {
         $self->ast->leave_pad(
             $self->ast->pad_stack_len - $saved_stack_len
         );
+        ### has command: $rule->has_command;
         return 'REBUILT'
             if $rule->has_command or $prereq_rebuilt;
     }

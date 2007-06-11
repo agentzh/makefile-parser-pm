@@ -5,11 +5,11 @@ use warnings;
 
 #use Smart::Comments;
 use base 'Makefile::AST::Rule::Base';
-use MDOM::Util 'trim_tokens';
+use Makefile::AST::Command;
 use List::MoreUtils;
 
 __PACKAGE__->mk_accessors(qw{
-    stem target other_targets
+    stem target other_targets shell
 });
 
 # XXX: generate description for the rule
@@ -30,7 +30,7 @@ sub as_str ($) {
     $str;
 }
 
-sub run_command ($$) {
+sub prepare_command ($$) {
     my ($self, $ast, $raw_cmd,
         $silent, $tolerant, $critical) = @_;
 
@@ -63,7 +63,7 @@ sub run_command ($$) {
     ### cmd after solve (1): $cmd
 
     $cmd =~ s/^\s+|\s+$//gs;
-    return if $cmd eq '';
+    return () if $cmd eq '';
     ### cmd after modifier extraction: $cmd
     ### critical (+): $critical
     ### tolerant (-): $tolerant
@@ -72,7 +72,7 @@ sub run_command ($$) {
         # it seems to be a canned sequence of commands
         # XXX This is a hack to get things work
         my @cmd = split /(?<!\\)\n/, $cmd;
-        my @new_cmd;
+        my @ast_cmds;
         for (@cmd) {
             s/^\s+|\s+$//g;
             require MDOM::Document::Gmake;
@@ -82,9 +82,9 @@ sub run_command ($$) {
             $cmd->__add_elements(@tokens);
             # XXX upper-level's modifiers should take in
             #  effect in the recursive calls:
-            $self->run_command($ast, $cmd, $silent, $tolerant, $critical);
+            push @ast_cmds, $self->prepare_command($ast, $cmd, $silent, $tolerant, $critical);
         }
-        return; # cut here
+        return @ast_cmds;
     }
     while (1) {
         if ($cmd =~ s/^\s*\+//) {
@@ -99,29 +99,16 @@ sub run_command ($$) {
         }
     }
     $cmd =~ s/^\s+|\s+$//gs;
-    return if $cmd eq '';
-
-    if (!$Makefile::AST::Evaluator::Quiet &&
-            (!$silent || $Makefile::AST::Evaluator::JustPrint)) {
-        print "$cmd\n";
-    }
-    if (! $Makefile::AST::Evaluator::JustPrint) {
-        system($ast->eval_var_value('SHELL'), '-c', $cmd);
-        if ($? != 0) {
-            my $retval = $? >> 8;
-            my $target = $ast->eval_var_value('@');
-            if (!$Makefile::AST::Evaluator::IgnoreErrors &&
-                    (!$tolerant || $critical)) {
-                # XXX better handling for tolerance
-                die "$::MAKE: *** [$target] Error $retval\n";
-            } else {
-                warn "$::MAKE: [$target] Error $retval (ignored)\n";
-            }
-        }
-    }
+    return Makefile::AST::Command->new({
+        silent => $silent,
+        tolerant => $tolerant,
+        critical => $critical,
+        content => $cmd,
+        target => $self->target,
+    });
 }
 
-sub run_commands ($$) {
+sub prepare_commands ($$) {
     my ($self, $ast) = @_;
     my @normal_prereqs = @{ $self->normal_prereqs };
     my @order_prereqs = @{ $self->order_prereqs };
@@ -129,6 +116,8 @@ sub run_commands ($$) {
     ## @order_prereqs
     ### run_commands: target: $self->target
     ### run_commands: Stem: $self->stem
+    $self->shell($ast->eval_var_value('SHELL'));
+    $ast->enter_pad;
     $ast->add_auto_var(
         '@' => [$self->target],
         '<' => [$normal_prereqs[0]], # XXX better solutions?
@@ -139,9 +128,42 @@ sub run_commands ($$) {
         # XXX add more automatic vars' defs here
     );
     ### auto $*: $ast->get_var('*')
+    my @ast_cmds;
     for my $cmd (@{ $self->commands }) {
         $Makefile::AST::Evaluator::CmdRun = 1;
-        $self->run_command($ast, $cmd);
+        push @ast_cmds, $self->prepare_command($ast, $cmd);
+    }
+    $ast->leave_pad;
+    return @ast_cmds;
+}
+
+sub run_command ($$) {
+    my ($self, $ast_cmd) = @_;
+    my $cmd = $ast_cmd->content;
+    if (!$Makefile::AST::Evaluator::Quiet &&
+            (!$ast_cmd->silent || $Makefile::AST::Evaluator::JustPrint)) {
+        print "$cmd\n";
+    }
+    if (! $Makefile::AST::Evaluator::JustPrint) {
+        system($self->shell, '-c', $cmd);
+        if ($? != 0) {
+            my $retval = $? >> 8;
+            my $target = $ast_cmd->target;
+            if (!$Makefile::AST::Evaluator::IgnoreErrors &&
+                    (!$ast_cmd->tolerant || $ast_cmd->critical)) {
+                # XXX better handling for tolerance
+                die "$::MAKE: *** [$target] Error $retval\n";
+            } else {
+                warn "$::MAKE: [$target] Error $retval (ignored)\n";
+            }
+        }
+    }
+}
+
+sub run_commands ($@) {
+    my $self = shift;
+    for my $ast_cmd (@_) {
+        $self->run_command($ast_cmd);
     }
 }
 
