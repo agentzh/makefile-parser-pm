@@ -63,7 +63,7 @@ sub prepare_command ($$) {
     ### cmd after solve (1): $cmd
 
     $cmd =~ s/^\s+|\s+$//gs;
-    return () if $cmd eq '';
+    return () if $cmd =~ /^(\\\n)*\\?$/s;
     ### cmd after modifier extraction: $cmd
     ### critical (+): $critical
     ### tolerant (-): $tolerant
@@ -99,6 +99,7 @@ sub prepare_command ($$) {
         }
     }
     $cmd =~ s/^\s+|\s+$//gs;
+    return () if $cmd =~ /^(\\\n)*\\?$/s;
     return Makefile::AST::Command->new({
         silent => $silent,
         tolerant => $tolerant,

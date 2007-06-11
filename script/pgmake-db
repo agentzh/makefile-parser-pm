@@ -12,6 +12,8 @@ use File::Slurp;
 use Makefile::AST::Evaluator;
 use List::Util 'first';
 
+my $VERSION = $Makefile::Parser::GmakeDB::VERSION;
+
 my @DefaultMakefile = (
     'GNUmakefile',
     'makefile',
@@ -19,6 +21,7 @@ my @DefaultMakefile = (
 );
 
 my $user_makefile;
+my $print_version;
 my ($makefile, $njobs, @goals);
 Getopt::Long::Configure ("bundling");
 GetOptions(
@@ -29,9 +32,17 @@ GetOptions(
     'i|ignore-errors' => \$Makefile::AST::Evaluator::IgnoreErrors,
     'B|always-make' => \$Makefile::AST::Evaluator::AlwaysMake,
     'q|question' => \$Makefile::AST::Evaluator::Question,
+    'v|version' => \$print_version,
 ) or die "Usage: $0 [-f makefile] goals...\n";
 ### $makefile
 ### @ARGV
+
+if ($print_version) {
+    print <<"_EOC_";
+pgmake-db $VERSION
+_EOC_
+    exit 0;
+}
 
 if ($Makefile::AST::Evaluator::Question) {
     $Makefile::AST::Evaluator::Quiet = 1;

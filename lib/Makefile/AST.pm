@@ -11,6 +11,11 @@ use Makefile::AST::Rule::Implicit;
 use Makefile::AST::Rule;
 use Makefile::AST::Variable;
 
+use base 'Class::Accessor::Fast';
+__PACKAGE__->mk_ro_accessors(qw{
+    phony_targets targets prereqs makefile
+});
+
 use List::Util 'first';
 use List::MoreUtils qw( uniq pairwise ) ;
 use Cwd qw/ realpath /;
@@ -19,10 +24,6 @@ use MDOM::Util 'trim_tokens';
 
 # XXX better name?
 our $Runtime = undef;
-
-sub makefile ($) {
-    $_[0]->{makefile};
-}
 
 sub new ($@) {
     my $class = ref $_[0] ? ref shift : shift;
@@ -36,7 +37,8 @@ sub new ($@) {
         named_pads   => {}, # hooks for target-specific
                             # variables
         pad_triggers => {},
-        targets        => {},
+        targets => {},
+        prereqs => {},
         phony_targets => {},
         makefile       => $makefile,
     }, $class;
@@ -44,12 +46,12 @@ sub new ($@) {
 
 sub is_phony_target ($$) {
     my ($self, $target) = @_;
-    $self->{phony_targets}->{$target};
+    $self->phony_targets->{$target};
 }
 
 sub set_phony_target ($$) {
     my ($self, $target) = @_;
-    $self->{phony_targets}->{$target} = 1;
+    $self->phony_targets->{$target} = 1;
 }
 
 sub target_exists ($$) {
@@ -61,7 +63,8 @@ sub target_exists ($$) {
 sub target_ought_to_exist ($$) {
     my ($self, $target) = @_;
     ### Test if target ought to exist: $target
-    $self->{targets}->{$target};
+    $self->targets->{$target} ||
+    $self->prereqs->{$target};
 }
 
 sub apply_explicit_rules ($$) {
@@ -197,9 +200,9 @@ sub add_explicit_rule ($$) {
         push @$list, $rule;
     }
     for my $prereq (@{$rule->normal_prereqs}, @{$rule->order_prereqs}) {
-        $self->{targets}->{$prereq} = 1;
+        $self->prereqs->{$prereq} = 1;
     }
-    $self->{targets}->{$rule->target} = 1;
+    $self->targets->{$rule->target} = 1;
 }
 
 sub add_implicit_rule ($$) {
