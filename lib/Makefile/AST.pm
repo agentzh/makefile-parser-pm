@@ -14,6 +14,11 @@ use Makefile::AST::Variable;
 use base 'Class::Accessor::Fast';
 __PACKAGE__->mk_ro_accessors(qw{
     phony_targets targets prereqs makefile
+    pad_stack named_pads pad_triggers
+});
+
+__PACKAGE__->mk_accessors(qw{
+    default_goal
 });
 
 use List::Util 'first';
@@ -75,9 +80,9 @@ sub apply_explicit_rules ($$) {
 
 sub get_var ($$) {
     my ($self, $name) = @_;
-    my $scopes = $self->{pad_stack};
-    for my $scope (@$scopes) {
-        if (my $var = $scope->{$name}) {
+    my $pads = $self->pad_stack;
+    for my $pad (@$pads) {
+        if (my $var = $pad->{$name}) {
             return $var;
         }
     }
@@ -91,17 +96,17 @@ sub get_var ($$) {
 sub enter_pad ($@) {
     my ($self, $name) = @_;
     #### Entering pad named: $name
-    my $stack = $self->{pad_stack};
+    my $stack = $self->pad_stack;
     my $pad;
     if (defined $name) {
         $pad =
-            $self->{named_pads}->{$name} ||= {};
+            $self->named_pads->{$name} ||= {};
     } else {
         $pad = {};
     }
     unshift @$stack, $pad;
     if (defined $name) {
-        my $list = $self->{pad_triggers}->{$name};
+        my $list = $self->pad_triggers->{$name};
         if ($list) {
             for my $trigger (@$list) {
                 #### Firing pad trigger for: $name
@@ -114,7 +119,7 @@ sub enter_pad ($@) {
 sub leave_pad ($@) {
     my ($self, $count) = @_;
     #### Leaving pad...
-    my $stack = $self->{pad_stack};
+    my $stack = $self->pad_stack;
     $count = 1 if !defined $count;
     for (1..$count) {
         shift @$stack if @$stack > 1;
@@ -122,12 +127,12 @@ sub leave_pad ($@) {
 }
 
 sub pad_stack_len ($) {
-    scalar(@{ $_[0]->{pad_stack} });
+    scalar(@{ $_[0]->pad_stack });
 }
 
 sub add_pad_trigger ($$$) {
     my ($self, $name, $sub) = @_;
-    my $list = $self->{pad_triggers}->{$name} ||= [];
+    my $list = $self->pad_triggers->{$name} ||= [];
     push @$list, $sub;
 }
 
@@ -142,7 +147,7 @@ sub add_var ($$) {
             )]
         );
     }
-    $self->{pad_stack}->[0]->{$var->name()} = $var;
+    $self->pad_stack->[0]->{$var->name()} = $var;
 }
 
 sub add_auto_var ($$$@) {
@@ -158,10 +163,6 @@ sub add_auto_var ($$$@) {
         );
         $self->add_var($var);
     }
-}
-
-sub default_goal ($) {
-    $_[0]->{default_goal};
 }
 
 sub explicit_rules ($) {
@@ -183,7 +184,7 @@ sub add_explicit_rule ($$) {
         ### check if it's the default target: $target
         # XXX skip the makefile itself
         if ($target !~ m{^\./Makefile_\S+} and (substr($target, 0, 1) ne '.' or $target =~ m{/})) {
-            $self->{default_goal} = $target;
+            $self->default_goal($target);
         }
     }
     if ($rule->colon eq ':') {

@@ -366,7 +366,7 @@ sub parse ($$) {
     {
         my $default = $ast->eval_var_value('.DEFAULT_GOAL');
         ## default goal's value: $var
-        $ast->{default_goal} = $default if $default;
+        $ast->default_goal($default) if $default;
         ### DEFAULT GOAL: $ast->default_goal
 
         my $rule = $ast->apply_explicit_rules('.PHONY');
