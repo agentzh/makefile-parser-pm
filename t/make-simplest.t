@@ -59,6 +59,7 @@ all:
 --- err
 
 
+
 === TEST 2: canned sequence of commands
 --- in
 define FOO
@@ -75,6 +76,7 @@ all:
 	@-touch
 	@:
 --- err
+
 
 
 === TEST 3: double-colon rules
@@ -103,7 +105,31 @@ make-simplest: *** No rule to make target `blue', needed by `foo'.  Ignored.
 
 
 
-=== TEST 4: .DEFAUL_GOAL
+=== TEST 4: double-colon rules (no warnings)
+--- in
+
+all: foo
+
+foo:: bar
+	@echo $@ $<
+
+foo:: blah blue
+	-echo $^
+--- out
+all: foo
+
+foo:: bar
+	@echo foo bar
+
+foo:: blah blue
+	-echo blah blue
+
+--- touch: bar blah blue
+--- err
+
+
+
+=== TEST 5: .DEFAUL_GOAL
 --- in
 .DEFAULT_GOAL = foo
 
@@ -125,7 +151,7 @@ make-simplest: *** No rule to make target `bah', needed by `foo'.  Ignored.
 
 
 
-=== TEST 5: order-only prereqs
+=== TEST 6: order-only prereqs
 --- in
 
 all : a b \
@@ -143,7 +169,7 @@ make-simplest: *** No rule to make target `c', needed by `all'.  Ignored.
 
 
 
-=== TEST 6: multi-target rules
+=== TEST 7: multi-target rules
 --- in
 foo bar: a.h
 
@@ -161,7 +187,7 @@ make-simplest: *** No rule to make target `a.h', needed by `foo'.  Ignored.
 
 
 
-=== TEST 7: pattern rules (no match)
+=== TEST 8: pattern rules (no match)
 --- in
 all: foo.x bar.w
 
@@ -178,7 +204,8 @@ make-simplest: *** No rule to make target `foo.x', needed by `all'.  Ignored.
 make-simplest: *** No rule to make target `bar.w', needed by `all'.  Ignored.
 
 
-=== TEST 8: pattern rules (no warnings)
+
+=== TEST 9: pattern rules (no warnings)
 --- in
 all: foo.x bar.w
 
@@ -193,7 +220,9 @@ all: foo.x bar.w
 
 --- err
 
-=== TEST 8: pattern rules (with match)
+
+
+=== TEST 10: pattern rules (with match)
 --- in
 all: foo.x bar.w
 
@@ -212,5 +241,56 @@ foo.x: foo.h
 bar.w: bar.hpp
 	echo ''
 --- err
---- ONLY
+
+
+
+=== TEST 11: target-specific variables
+--- in
+
+FOO = foo
+default: all any
+all: FOO += one
+all: FOO += two
+all: BAR = bar
+all: FOO += three
+all: BAR += baz
+all: ; @echo $(FOO); echo $(BAR)
+any: ; @echo $(FOO); echo $(BAR) end
+
+--- out
+default: all any
+
+all:
+	@echo foo one two three; echo bar baz
+
+any:
+	@echo foo; echo  end
+
+--- err
+
+
+
+=== TEST 12: ditto (override cmd line vars)
+--- in
+
+all: override FOO = foo
+all: ; @echo $(FOO)
+--- goals:  FOO=cmd
+--- out
+all:
+	@echo foo
+--- err
+
+
+
+=== TEST 13: ditto (cmd line vars) (2)
+--- in
+
+all: FOO = foo
+all: ; @echo $(FOO)
+--- goals:  FOO=cmd
+--- out
+all:
+	@echo cmd
+--- err
 
