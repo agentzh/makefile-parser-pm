@@ -21,9 +21,9 @@ run {
     system('mkdir t/tmp');
     chdir 't/tmp';
     write_file($makefile, $block->in);
-    my ($stdout, $stderr, @goals);
-    if ($block->goals) {
-        @goals = split /\s+/, $block->goals;
+    my ($stdout, $stderr, @options);
+    if ($block->options) {
+        @options = split /\s+/, $block->options;
     }
     my $touch = $block->touch;
     if ($touch) {
@@ -32,7 +32,7 @@ run {
         }
     }
     run3(
-        [$^X, "$saved_cwd/script/makesimple", '-f', $makefile, @goals],
+        [$^X, "$saved_cwd/script/makesimple", '-f', $makefile, @options],
         undef,
         \$stdout,
         \$stderr,
@@ -275,7 +275,7 @@ any:
 
 all: override FOO = foo
 all: ; @echo $(FOO)
---- goals:  FOO=cmd
+--- options:  FOO=cmd
 --- out
 all:
 	@echo foo
@@ -288,9 +288,200 @@ all:
 
 all: FOO = foo
 all: ; @echo $(FOO)
---- goals:  FOO=cmd
+--- options:  FOO=cmd
 --- out
 all:
 	@echo cmd
+--- err
+
+
+
+=== TEST 14: static pattern rules
+--- in
+
+CC = gcc
+CFLAGS =
+objects = foo.o bar.o
+
+all: $(objects)
+
+$(objects): %.o: %.c
+	$(CC) -c $(CFLAGS) $< -o $@
+
+--- out
+
+all: foo.o bar.o
+
+foo.o: foo.c
+	gcc -c  foo.c -o foo.o
+
+bar.o: bar.c
+	gcc -c  bar.c -o bar.o
+
+--- err
+makesimple: *** No rule to make target `foo.c', needed by `foo.o'.  Ignored.
+makesimple: *** No rule to make target `bar.c', needed by `bar.o'.  Ignored.
+
+
+
+=== TEST 15: static pattern rules (no warnings)
+--- in
+
+CC = gcc
+CFLAGS = -O
+objects = foo.o bar.o
+
+all: $(objects)
+
+$(objects): %.o: %.c
+	$(CC) -c $(CFLAGS) $< -o $@
+
+--- touch: foo.c bar.c
+--- out
+
+all: foo.o bar.o
+
+foo.o: foo.c
+	gcc -c -O foo.c -o foo.o
+
+bar.o: bar.c
+	gcc -c -O bar.c -o bar.o
+
+--- err
+
+
+
+=== TEST 16: conditionals - ifdef $(foo)
+--- in
+
+bar = true
+foo = bar
+ifdef $(foo)
+all: ; @echo hello
+else
+foo: bar
+	touch $@
+endif
+	-rm blahblah
+
+--- out
+
+all:
+	@echo hello
+	-rm blahblah
+
+--- err
+
+
+
+=== TEST 17: conditionals - ifdef foo
+--- in
+
+foo = bar
+ifdef foo
+all: ; @echo hello
+else
+foo: bar
+	touch $@
+endif
+	-rm blahblah
+
+--- out
+
+all:
+	@echo hello
+	-rm blahblah
+
+--- err
+
+
+
+=== TEST 18: conditionals - override var foo via cmd line options
+--- in
+
+foo = bar
+ifdef foo
+all: ; @echo hello
+else
+foo: bar
+	touch $@
+endif
+	-rm blahblah
+
+--- options: foo=
+--- out
+
+foo: bar
+	touch foo
+	-rm blahblah
+
+--- err
+makesimple: *** No rule to make target `bar', needed by `foo'.  Ignored.
+
+
+
+=== TEST 19: functions in the first pass
+--- in
+
+objects = foo.o bar.o baz.o
+all : $(objects:.o=.c)
+	@ echo $^
+
+--- out
+all: foo.c bar.c baz.c
+	@echo foo.c bar.c baz.c
+--- err
+makesimple: *** No rule to make target `foo.c', needed by `all'.  Ignored.
+makesimple: *** No rule to make target `bar.c', needed by `all'.  Ignored.
+makesimple: *** No rule to make target `baz.c', needed by `all'.  Ignored.
+
+
+
+=== TEST 20: functions in the second pass
+--- in
+
+objects = foo.o bar.o baz.o
+all :
+	echo $(patsubst %.o,%.c,${objects})
+
+--- out
+all:
+	echo foo.c bar.c baz.c
+--- err
+
+
+
+=== TEST 21: functions in the both passes
+--- in
+
+objects = $(sort $(wildcard *.o))
+all : ; echo $(patsubst %.o,%.c,${objects})
+
+--- touch: foo.o bar.o baz.o
+--- out
+all:
+	echo bar.c baz.c foo.c
+--- err
+
+
+
+=== TEST 22: commands spanning multiple lines
+--- in
+
+foo=hello
+bar=my
+baz=world
+
+all:
+	@echo $(foo) \
+  $(bar) \
+      $(baz)
+
+--- out
+all:
+	@echo hello \
+	my \
+	world
+
 --- err
 
