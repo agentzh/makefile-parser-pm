@@ -9,7 +9,7 @@ use Test::Make::Util;
 
 plan tests => 3 * blocks();
 
-my $makefile = 'make-simple.mk';
+my $makefile = 'makesimple.tmp.mk';
 
 my $saved_cwd = cwd;
 
@@ -32,16 +32,16 @@ run {
         }
     }
     run3(
-        [$^X, "$saved_cwd/script/make-simplest", '-f', $makefile, @goals],
+        [$^X, "$saved_cwd/script/makesimple", '-f', $makefile, @goals],
         undef,
         \$stdout,
         \$stderr,
     );
     is(($? >> 8), 0, "$name - process returned the 0 status");
     is $stdout, $block->out,
-        "$name - script/make-simplest generated the right output";
+        "$name - script/makesimple generated the right output";
     is $stderr, $block->err,
-        "$name - script/make-simplest generated the right error";
+        "$name - script/makesimple generated the right error";
 
 };
 
@@ -99,9 +99,9 @@ foo:: blah blue
 	-echo blah blue
 
 --- err
-make-simplest: *** No rule to make target `bar', needed by `foo'.  Ignored.
-make-simplest: *** No rule to make target `blah', needed by `foo'.  Ignored.
-make-simplest: *** No rule to make target `blue', needed by `foo'.  Ignored.
+makesimple: *** No rule to make target `bar', needed by `foo'.  Ignored.
+makesimple: *** No rule to make target `blah', needed by `foo'.  Ignored.
+makesimple: *** No rule to make target `blue', needed by `foo'.  Ignored.
 
 
 
@@ -147,7 +147,7 @@ all: foo
 	@echo foo
 
 --- err
-make-simplest: *** No rule to make target `bah', needed by `foo'.  Ignored.
+makesimple: *** No rule to make target `bah', needed by `foo'.  Ignored.
 
 
 
@@ -163,9 +163,9 @@ all: a b | c
 	echo
 
 --- err
-make-simplest: *** No rule to make target `a', needed by `all'.  Ignored.
-make-simplest: *** No rule to make target `b', needed by `all'.  Ignored.
-make-simplest: *** No rule to make target `c', needed by `all'.  Ignored.
+makesimple: *** No rule to make target `a', needed by `all'.  Ignored.
+makesimple: *** No rule to make target `b', needed by `all'.  Ignored.
+makesimple: *** No rule to make target `c', needed by `all'.  Ignored.
 
 
 
@@ -182,8 +182,8 @@ foo: blah a.h
 bar: a.h
 
 --- err
-make-simplest: *** No rule to make target `blah', needed by `foo'.  Ignored.
-make-simplest: *** No rule to make target `a.h', needed by `foo'.  Ignored.
+makesimple: *** No rule to make target `blah', needed by `foo'.  Ignored.
+makesimple: *** No rule to make target `a.h', needed by `foo'.  Ignored.
 
 
 
@@ -200,8 +200,8 @@ all: foo.x bar.w
 all: foo.x bar.w
 
 --- err
-make-simplest: *** No rule to make target `foo.x', needed by `all'.  Ignored.
-make-simplest: *** No rule to make target `bar.w', needed by `all'.  Ignored.
+makesimple: *** No rule to make target `foo.x', needed by `all'.  Ignored.
+makesimple: *** No rule to make target `bar.w', needed by `all'.  Ignored.
 
 
 
