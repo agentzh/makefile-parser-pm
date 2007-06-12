@@ -276,12 +276,14 @@ sub apply_implicit_rules ($$) {
     ### step 6...
     for my $rule (@rules) {
         next if $rule->is_terminal;
+        #### applying the implicit rule recursively
         my $applied = $rule->apply(
             $self, $target,
             { recursive => 1 });
         if ($applied) {
             return $applied;
         }
+        #### Failed to apply the rule recursively
     }
 
     ### step 7...

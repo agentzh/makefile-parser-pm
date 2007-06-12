@@ -58,6 +58,7 @@ sub apply ($$$@) {
     #### applying implicit rule to target: $target
     my $recursive;
     $recursive = $opts->{recursive} if $opts;
+    #### $recursive
     my $match = $self->match_target($target);
     ## $match
     return undef if !$match;
@@ -75,14 +76,14 @@ sub apply ($$$@) {
     for my $prereq (@order_prereqs, @normal_prereqs) {
         #### Test whether the prereq exists or ought to exist: $prereq
         #### target exists? : $ast->target_exists($prereq)
-        #### file test: -e 'bar.hpp'
+        ## file test: -e 'bar.hpp'
         #### Target ought to exists? : $ast->target_ought_to_exist($prereq)
         next if $ast->target_exists($prereq) or
             $ast->target_ought_to_exist($prereq);
         #### Failed to pass...
         # XXX mark intermedia files here
         next if $recursive and
-            $self->apply($ast, $prereq, {recursive => 1});
+            $ast->apply_implicit_rules($prereq);
         return undef;
     }
     return Makefile::AST::Rule->new(

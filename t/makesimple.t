@@ -244,7 +244,72 @@ bar.w: bar.hpp
 
 
 
-=== TEST 11: target-specific variables
+=== TEST 11: chained implicit rules
+--- in
+
+all: foo.a bar.a baz.a
+
+%.a: %.b ; @touch $@
+%.b: %.d ; @touch $@
+
+--- touch: foo.d bar.d baz.d
+--- out
+all: foo.a bar.a baz.a
+
+foo.b: foo.d
+	@touch foo.b
+
+foo.a: foo.b
+	@touch foo.a
+
+bar.b: bar.d
+	@touch bar.b
+
+bar.a: bar.b
+	@touch bar.a
+
+baz.b: baz.d
+	@touch baz.b
+
+baz.a: baz.b
+	@touch baz.a
+
+--- err
+
+
+
+=== TEST 12: extra goals given from the command line
+--- in
+
+all: foo.a
+
+%.a: %.b ; @touch $@
+%.b: %.d ; @touch $@
+
+--- options: bar.a
+--- touch: foo.d bar.d
+--- out
+
+all: foo.a
+
+bar.b: bar.d
+	@touch bar.b
+
+bar.a: bar.b
+	@touch bar.a
+
+foo.b: foo.d
+	@touch foo.b
+
+foo.a: foo.b
+	@touch foo.a
+
+--- err
+--- ONLY
+
+
+
+=== TEST 13: target-specific variables
 --- in
 
 FOO = foo
@@ -270,7 +335,7 @@ any:
 
 
 
-=== TEST 12: ditto (override cmd line vars)
+=== TEST 14: ditto (override cmd line vars)
 --- in
 
 all: override FOO = foo
@@ -283,7 +348,7 @@ all:
 
 
 
-=== TEST 13: ditto (cmd line vars) (2)
+=== TEST 15: ditto (cmd line vars) (2)
 --- in
 
 all: FOO = foo
@@ -296,7 +361,7 @@ all:
 
 
 
-=== TEST 14: static pattern rules
+=== TEST 16: static pattern rules
 --- in
 
 CC = gcc
@@ -324,7 +389,7 @@ makesimple: *** No rule to make target `bar.c', needed by `bar.o'.  Ignored.
 
 
 
-=== TEST 15: static pattern rules (no warnings)
+=== TEST 17: static pattern rules (no warnings)
 --- in
 
 CC = gcc
@@ -351,7 +416,7 @@ bar.o: bar.c
 
 
 
-=== TEST 16: conditionals - ifdef $(foo)
+=== TEST 18: conditionals - ifdef $(foo)
 --- in
 
 bar = true
@@ -374,7 +439,7 @@ all:
 
 
 
-=== TEST 17: conditionals - ifdef foo
+=== TEST 19: conditionals - ifdef foo
 --- in
 
 foo = bar
@@ -396,7 +461,7 @@ all:
 
 
 
-=== TEST 18: conditionals - override var foo via cmd line options
+=== TEST 20: conditionals - override var foo via cmd line options
 --- in
 
 foo = bar
@@ -420,7 +485,7 @@ makesimple: *** No rule to make target `bar', needed by `foo'.  Ignored.
 
 
 
-=== TEST 19: functions in the first pass
+=== TEST 21: functions in the first pass
 --- in
 
 objects = foo.o bar.o baz.o
@@ -437,7 +502,7 @@ makesimple: *** No rule to make target `baz.c', needed by `all'.  Ignored.
 
 
 
-=== TEST 20: functions in the second pass
+=== TEST 22: functions in the second pass
 --- in
 
 objects = foo.o bar.o baz.o
@@ -451,7 +516,7 @@ all:
 
 
 
-=== TEST 21: functions in the both passes
+=== TEST 23: functions in the both passes
 --- in
 
 objects = $(sort $(wildcard *.o))
@@ -465,7 +530,7 @@ all:
 
 
 
-=== TEST 22: commands spanning multiple lines
+=== TEST 24: commands spanning multiple lines
 --- in
 
 foo=hello
