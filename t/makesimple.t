@@ -305,7 +305,6 @@ foo.a: foo.b
 	@touch foo.a
 
 --- err
---- ONLY
 
 
 
@@ -549,4 +548,34 @@ all:
 	world
 
 --- err
+
+
+
+=== TEST 25: dynamics
+--- in
+
+head = all:
+$(head)
+	@echo $@
+
+--- out
+all:
+	@echo all
+--- err
+
+
+
+=== TEST 26: dynamics (2)
+--- in
+
+head = all:
+$(head)
+	@echo $@
+
+--- options: head=all:bar
+--- out
+all: bar
+	@echo all
+--- err
+makesimple: *** No rule to make target `bar', needed by `all'.  Ignored.
 
