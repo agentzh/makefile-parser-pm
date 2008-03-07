@@ -2,8 +2,7 @@ NAME
     Makefile::Parser - A simple parser for Makefiles
 
 VERSION
-    This document describes Makefile::Parser 0.17 released on March 16,
-    2007.
+    This document describes Makefile::Parser 0.20 released on March 7, 2008.
 
 SYNOPSIS
       use Makefile::Parser;
@@ -415,13 +414,13 @@ BUGS
     <http://rt.cpan.org/NoAuth/Bugs.html?Dist=Makefile-Parser>.
 
 SEE ALSO
-    plmake, Makefile::GraphViz, Make.
+    plmake, makesimple, Makefile::Parser::GmakeDB, Makefile::GraphViz, Make.
 
 AUTHOR
     Agent Zhang, <agentzh@gmail.com>
 
 COPYRIGHT AND LICENSE
-    Copyright (c) 2005-2007 Agent Zhang. All rights reserved.
+    Copyright (c) 2005-2007 Agent Zhang.
 
     This library is free software; you can redistribute it and/or modify it
     under the same terms as Perl itself.

@@ -1,5 +1,8 @@
 Revision history for Perl extension Makefile::Parser.
 
+0.20 2008-03-07
+* added Makefile::Parser::GmakeDB and Makefile::AST
+
 0.17 2007-03-16
 * added support for the builtins 'error', 'warning', and 'info'
 

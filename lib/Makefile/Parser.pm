@@ -11,7 +11,7 @@ use Text::Balanced qw( gen_extract_tagged );
 
 #our $Debug = 0;
 our $Strict = 0;
-our $VERSION = '0.17';
+our $VERSION = '0.20';
 our $Error;
 our $Runtime = undef;
 
@@ -867,7 +867,7 @@ Makefile::Parser - A simple parser for Makefiles
 
 =head1 VERSION
 
-This document describes Makefile::Parser 0.17 released on March 16, 2007.
+This document describes Makefile::Parser 0.20 released on March 7, 2008.
 
 =head1 SYNOPSIS
 
@@ -1391,7 +1391,7 @@ to L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Makefile-Parser>.
 
 =head1 SEE ALSO
 
-L<plmake>, L<Makefile::GraphViz>, L<Make>.
+L<plmake>, L<makesimple>, L<Makefile::Parser::GmakeDB>, L<Makefile::GraphViz>, L<Make>.
 
 =head1 AUTHOR
 
@@ -1399,7 +1399,7 @@ Agent Zhang, E<lt>agentzh@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2007 Agent Zhang. All rights reserved.
+Copyright (c) 2005-2007 Agent Zhang.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
