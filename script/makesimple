@@ -40,7 +40,7 @@ $Makefile::AST::Evaluator::Question = 1;
 
 if ($print_version) {
     print <<"_EOC_";
-pgmake-db $VERSION
+makesimple $VERSION
 _EOC_
     exit 0;
 }
@@ -71,6 +71,13 @@ if (!defined $makefile) {
 }
 
 ### var defs via command line: @var_defs
+
+my $level = $ENV{MAKESIMPLE_LEVEL};
+if (!defined $level) { $level = 0; }
+else { $level++ }
+#### %ENV
+$ENV{MAKELEVEL} = $level;
+$ENV{MAKESIMPLE_LEVEL} = $level;
 
 my ($stdout, $stderr);
 run3 ['make', '-pqRrs', '-f', $makefile, @var_defs], undef, \$stdout, \$stderr;

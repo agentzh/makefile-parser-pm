@@ -32,7 +32,7 @@ Makefile.PL
 MANIFEST
 META.yml
 README
-script/make-simplest
+script/makesimple
 script/pgmake-db
 script/plmake
 t/ast-basic.t

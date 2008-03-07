@@ -5,7 +5,8 @@ name            ('Makefile-Parser');
 perl_version    ('5.004');
 all_from        ('lib/Makefile/Parser.pm');
 
-install_script  ('script/plmake');
+install_script  ('script/pgmake-db');
+install_script  ('script/makesimple');
 
 requires        ('Text::Balanced');
 requires        ('List::Util');
