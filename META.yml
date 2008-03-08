@@ -29,4 +29,4 @@ requires:
   Makefile::DOM: 0.001
   Text::Balanced: 0
   perl: 5.004
-version: 0.201
+version: 0.202
