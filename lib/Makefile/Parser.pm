@@ -11,7 +11,7 @@ use Text::Balanced qw( gen_extract_tagged );
 
 #our $Debug = 0;
 our $Strict = 0;
-our $VERSION = '0.20';
+our $VERSION = '0.201';
 our $Error;
 our $Runtime = undef;
 
@@ -867,7 +867,7 @@ Makefile::Parser - A simple parser for Makefiles
 
 =head1 VERSION
 
-This document describes Makefile::Parser 0.20 released on March 7, 2008.
+This document describes Makefile::Parser 0.201 released on March 8, 2008.
 
 =head1 SYNOPSIS
 

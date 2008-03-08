@@ -1,5 +1,8 @@
 Revision history for Perl extension Makefile::Parser.
 
+0.201 2008-03-08
+* Added t/lib from the mdom repos.
+
 0.20 2008-03-07
 * added Makefile::Parser::GmakeDB and Makefile::AST
 

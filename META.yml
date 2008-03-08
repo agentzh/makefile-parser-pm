@@ -1,8 +1,16 @@
 --- 
 abstract: A simple parser for Makefiles
-author: Agent Zhang, <agentzh@gmail.com>
+author: 
+  - Agent Zhang, <agentzh@gmail.com>
+build_requires: 
+  Cwd: 3.12
+  File::Spec: 3.12
+  File::Temp: 0.16
+  FindBin: 1.47
+  IPC::Run3: 0.036
+  Test::More: 0.62
 distribution_type: module
-generated_by: Module::Install version 0.67
+generated_by: Module::Install version 0.68
 license: perl
 meta-spec: 
   url: http://module-build.sourceforge.net/META-spec-v1.3.html
@@ -21,4 +29,4 @@ requires:
   Makefile::DOM: 0.001
   Text::Balanced: 0
   perl: 5.004
-version: 0.20
+version: 0.201
