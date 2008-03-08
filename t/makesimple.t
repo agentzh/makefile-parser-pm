@@ -4,7 +4,7 @@ use File::Slurp;
 use IPC::Run3;
 use Cwd;
 
-use lib '/home/agentz/mdom-gmake/t/lib';
+use lib 't/lib';
 use Test::Make::Util;
 
 plan tests => 3 * blocks();

@@ -42,6 +42,10 @@ t/ast-basic.t
 t/ast-rule.t
 t/ast-stem.t
 t/ast-var.t
+t/lib/Test/Make/Base.pm
+t/lib/Test/Make/Util.pm
+t/lib/Test/Util.pm
+t/lib/Test/Util/Base.pm
 t/Makefile
 t/Makefile-Parser.t
 t/Makefile2
