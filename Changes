@@ -1,5 +1,11 @@
 Revision history for Perl extension Makefile::Parser.
 
+0.204 2008-03-08
+* Added missing external dependencies to Makefile.PL
+
+0.203 2008-03-08
+* Added File::Slurp to Makefile.PL
+
 0.202 2008-03-08
 * Added missing dependencies to Makefile.PL
 * updated inc/ using the latest Module::Install

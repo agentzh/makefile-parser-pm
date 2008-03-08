@@ -17,14 +17,12 @@ requires        ('File::Spec');
 requires        ('Class::Accessor::Fast');
 requires        ('Cwd');
 requires        ('File::Slurp');
-requires        ('Makefile::DOM' => '0.001');
+requires        ('Makefile::DOM' => '0.002');
+requires        ('Class::Trigger' => '0.13');
+requires        ('Time::HiRes');
 
 build_requires  ('Test::More'      => '0.62');
 build_requires  ('IPC::Run3'       => '0.036');
-build_requires  ('File::Temp'      => '0.16');
-build_requires  ('File::Spec'      => '3.12');
-build_requires  ('Cwd'             => '3.12');
-build_requiers  ('FindBin'         => '1.47');
 
 use_test_base;
 
