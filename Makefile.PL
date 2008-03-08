@@ -16,6 +16,7 @@ requires        ('List::MoreUtils');
 requires        ('File::Spec');
 requires        ('Class::Accessor::Fast');
 requires        ('Cwd');
+requires        ('File::Slurp');
 requires        ('Makefile::DOM' => '0.001');
 
 build_requires  ('Test::More'      => '0.62');
