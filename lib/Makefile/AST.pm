@@ -839,6 +839,6 @@ it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-L<Makefile::Parser::GmakeDB>, L<Makefile::AST::Evaluator>,
+L<Makefile::AST::Evaluator>, L<Makefile::Parser::GmakeDB>,
 L<makesimple>, L<Makefile::DOM>.
 
