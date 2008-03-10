@@ -3,6 +3,7 @@ Revision history for Perl extension Makefile::Parser.
 0.206 2008-03-10
 * Added POD to Makefile::Parser::GmakeDB.
 * Added POD to the makesimple script.
+* Added pointers for the GmakeDB parser to Makefile::Parser's POD.
 
 0.205 2008-03-10
 * Removed bogus debugging code from the makesimple script.

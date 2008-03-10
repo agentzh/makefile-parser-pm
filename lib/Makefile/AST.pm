@@ -770,3 +770,75 @@ sub solve_refs_in_tokens ($$) {
 }
 
 1;
+__END__
+
+=head1 NAME
+
+Makefile::AST - AST for (GNU) makefiles
+
+=head1 DESCRIPTION
+
+The structure of this (GNU) makefile AST is designed based on GNU make's data base listing output produced by C<--print-data-base>.
+
+This AST library provides the following classes:
+
+=over
+
+=item Makefile::AST
+
+The primary class for ASTs. Provides interface for node adding and querying, such as C<add_implicit_rule>, C<apply_implicit_rules>, C<add_explicit_rule>, C<apply_explicit_rules>, C<add_var>, C<add_auto_var>, C<get_var>, as well as lots of other utility functions, like method C<eval_var_value> for computing the ultimate values of makefile variables, method C<enter_pad> and C<leave_pad> for local variable's scoping pad.
+
+=item L<Makefile::AST::Rule::Base>
+
+This is the base class for the rule nodes in the AST. It has properties like C<normal_prereqs>, C<order_prereqs>, C<commands>, and C<colon>.
+
+=item L<Makefile::AST::Rule>
+
+This class represents the de-sugared form of simple rules and implicite rules I<after> application. It inherits from L<Makefile::AST::Rule::Base>, and adds new properties C<target> and C<other_targets>.
+
+=item L<Makefile::AST::Rule::Implicit>
+
+This class represents the implicit rule nodes in the AST. It inherits from L<Makefile::AST::Rule::Base>, and adds new properties C<targets>, C<match_anything>, and C<is_terminal>.
+
+=item L<Makefile::AST::StemMatch>
+
+This class encapsulates the file pattern matching (file names containing C<%>) and stem substitution algorithms.
+
+=item L<Makefile::AST::Variable>
+
+It represents the makefile variable nodes in the AST, including C<name>, C<value>, C<flavor>, and C<origin>.
+
+=item L<Makefile::AST::Command>
+
+Used to encapsulate information regarding makefile rule commands (e.g. command body, command modifiers C<@>, C<->, C<+>, and etc.) as a whole.
+
+=back
+
+=head1 LIMITATIONS AND TODO
+
+Adding support for other flavors' makes into this AST libary should make a huge amount of sense. The most interesting candiate is Microsoft's NMAKE.
+
+=head1 SVN REPOSITORY
+
+For the very latest version of this script, check out the source from
+
+L<http://svn.openfoundry.org/makefileparser/branches/gmake-db>.
+
+There is anonymous access to all.
+
+=head1 AUTHOR
+
+Agent Zhang C<< <agentzh@yahoo.cn> >>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (c) 2005-2008 by Agent Zhang (agentzh).
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=head1 SEE ALSO
+
+L<Makefile::Parser::GmakeDB>, L<Makefile::AST::Evaluator>,
+L<makesimple>, L<Makefile::DOM>.
+

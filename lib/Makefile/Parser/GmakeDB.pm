@@ -504,13 +504,13 @@ I've already reported this issue to the GNU make team as Savannah bug #20069.
 
 For the very latest version of this script, check out the source from
 
-L<http://svn.openfoundry.org/makefileparser/branches/gmake-db/script>.
+L<http://svn.openfoundry.org/makefileparser/branches/gmake-db>.
 
 There is anonymous access to all.
 
 =head1 AUTHOR
 
-Agent Zhang, C<< <agentzh@yahoo.cn> >>
+Agent Zhang C<< <agentzh@yahoo.cn> >>
 
 =head1 COPYRIGHT AND LICENSE
 
@@ -521,5 +521,5 @@ it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-L<makesimple>, L<Makefile::AST>, L<Makefile::AST::Evaluator>.
+L<makesimple>, L<Makefile::AST>, L<Makefile::AST::Evaluator>, L<Makefile::DOM>.
 
