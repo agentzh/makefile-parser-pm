@@ -10,6 +10,8 @@ use Test::Make::Util;
 plan tests => 3 * blocks();
 
 my $makefile = 'makesimple.tmp.mk';
+my $line = (split /\n/, `make -v`)[0];
+warn $line, "\n";
 
 my $saved_cwd = cwd;
 
