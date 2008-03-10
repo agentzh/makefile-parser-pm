@@ -24,8 +24,8 @@ requires:
   File::Spec: 0
   List::MoreUtils: 0
   List::Util: 0
-  Makefile::DOM: 0.002
+  Makefile::DOM: 0.003
   Text::Balanced: 0
   Time::HiRes: 0
   perl: 5.004
-version: 0.206
+version: 0.207

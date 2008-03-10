@@ -324,23 +324,25 @@ This variable corresponds to the command-line option C<-B> or C<--always-make>. 
 
 =item C<$Quiet>
 
-该变量对应于 GNU make 的命令行选项 -s, --silent, 与 --quiet. 其作用是取消命令执行过程的打印。
+It corresponds to GNU make's command-line option C<-s>, C<--silent>, or C<--quiet>. Its effect is to cancel the echoing of shell commands being executed.
 
 =item C<$JustPrint>
 
-该变量对应于 GNU make 的命令行选项 -n, --just-print, --dry-run, 或者 --recon. 其作用是只打印出所要执行的命令，但不执行命令。 
+This variable corresponds to GNU make's command line option C<-n>, C<--just-print>, C<--dry-run>, or C<--recon>. Its effect is to print out the shell commands requiring execution but without actually executing them.
 
 =item C<$IgnoreErrors>
 
-该变量对应于 GNU make 的命令行选项 -i, 或 --ignore-errors，其作用是在执行过程中忽略规则命令执行的错误。 
+This variable corresponds to GNU make's command line option C<-i> or C<--ignore-errors>，It's used to ignore the errors of shell commands being executed during the make process. The default behavior is quitting as soon as a shell command without the C<-> modifier fails.
 
 =back
 
 =head1 CLASS TRIGGERS
 
-Makefile::AST::Evaluator 的 make_by_rule 方法中通过 Class::Trait 模块定义了一个名为 firing_rule 的触发器。每当 make_by_rule 方法执行到触发点时，就将上下文中的 Makefile::AST::Rule 对象和与之对应的 Makefile::AST::Command 对象传递到触发器的处理句柄中。 
+The C<make_by_rule> method of this class defines a trigger named C<firing_rule> via the L<Class::Trait> module. Everytime the C<make_by_rule> method reaches the trigger point, it will invoke the user's processing handler with the following three arguments: the self object, the L<Makefile::AST::Rule> object, and the corresponding C<Makefile::AST::Command> object in the context.
 
-用户代码正是通过向 firing_rule 触发器注册自己的消息处理句柄的方式来复用运行时的代码的。 这种方式能有效地让我的 Evaluator 代码保持整洁，同时又给用户的应用提供了很大的灵活性。 
+By registering his own processing handlers for the C<firing_rule> trigger, the user's code can reuse the evaluator to do his own cool things without traversing the makefile ASTs himself.
+
+See the L</SYNOPSIS> for code examples.
 
 =head1 SVN REPOSITORY
 
