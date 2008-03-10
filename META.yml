@@ -1,7 +1,7 @@
 --- 
 abstract: A simple parser for Makefiles
 author: 
-  - Agent Zhang, <agentzh@gmail.com>
+  - Agent Zhang, C<< <agentzh@yahoo.cn> >>
 build_requires: 
   IPC::Run3: 0.036
   Test::More: 0.62
@@ -28,4 +28,4 @@ requires:
   Text::Balanced: 0
   Time::HiRes: 0
   perl: 5.004
-version: 0.205
+version: 0.206

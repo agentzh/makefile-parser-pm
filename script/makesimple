@@ -185,4 +185,42 @@ sub patch_database {
     $$ref =~ s/^([^\n]*)(?<!\\)#(\S[^\n]*\n#  Implicit rule search has)/$1\\#$2/msg;
     $$ref =~ s/^([^\n]*)(?<!\\):(\S[^\n]*:\n#  Implicit rule search has)/$1\\:$2/msg;
 }
+__END__
+
+=head1 NAME
+
+makesimple - De-sugar GNU makefiles to its simplest form using the GmakeDB parser
+
+=head1 SYNOPSIS
+
+    $ makesimple -f myGNUmakefile.mk > simplest.mk
+
+=head1 DESCRIPTION
+
+The makesimple script is a makefile simplifier. It
+converts a full-fledged GNU makefile to a highly de-sugared basic
+makefile which is almost a call-path tree dump.
+
+=head1 SVN REPOSITORY
+
+For the very latest version of this script, check out the source from
+
+L<http://svn.openfoundry.org/makefileparser/branches/gmake-db/script>.
+
+There is anonymous access to all.
+
+=head1 AUTHOR
+
+Agent Zhang, C<< <agentzh@yahoo.cn> >>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (c) 2005-2008 by Agent Zhang (agentzh).
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=head1 SEE ALSO
+
+L<Makefile::Parser::GmakeDB>, L<Makefile::AST>, L<Makefile::AST::Evaluator>.
 
