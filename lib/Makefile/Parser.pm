@@ -916,19 +916,18 @@ This document describes Makefile::Parser 0.206 released on March 10, 2008.
 =head1 DESCRIPTION
 
 This is a simple parser for Makefiles. At this very early stage, the parser
-only supports a limited set of features, so it may not recognize some
+only supports a limited set of features, so it may not recognize most of the
 advanced features provided by certain make tools like GNU make. Its initial
-purpose is to provide basic support for another module named 
+purpose is to provide basic support for another module named
 L<Makefile::GraphViz>, which is aimed to render the building process
-specified by a Makefile using the amazing GraphViz library. The L<Make> 
+specified by a Makefile using the amazing GraphViz library. The L<Make>
 module is not satisfactory for this purpose, so I decided to build one
 of my own.
 
 B<WARNING> This stuff is highly experimental and is currently at B<pre-alpha>
-stage, so production use is strongly discouraged. Right now I'm working on
-a completely new implementation based on Makefile::DOM (which will land
-onto CPAN soon), but meanwhile the current core is still evolving continuously.
-The API is still in flux and will possibly change in the near future.
+stage, so production use is strongly discouraged. Right now it's just a toy for parsing trivial makefiles.
+
+If you're looking for something more serious for parsing GNU makefiles, please see L<Makefile::Parser::GmakeDB> instead. The GmakeDB parser has passed 51% of GNU make's official test suite as of this writing.
 
 =head2 SYNTAX SUPPORTED
 
