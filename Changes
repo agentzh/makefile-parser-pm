@@ -1,5 +1,9 @@
 Revision history for Perl extension Makefile::Parser.
 
+0.205 2008-03-10
+* Removed bogus debugging code from the makesimple script.
+* Fixed the test suite a bit.
+
 0.204 2008-03-08
 * Added missing external dependencies to Makefile.PL
 
@@ -27,6 +31,7 @@ Revision history for Perl extension Makefile::Parser.
 ** or
 ** shell
 ** foreach
+
 * removed /r from Parsre.pm
 * added support for the shell function
 * degraded the version of Test::More that Makefile::Parser requires

@@ -28,4 +28,4 @@ requires:
   Text::Balanced: 0
   Time::HiRes: 0
   perl: 5.004
-version: 0.204
+version: 0.205

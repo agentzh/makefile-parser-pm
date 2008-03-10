@@ -10,7 +10,7 @@ use List::MoreUtils qw( none );
 use MDOM::Document::Gmake;
 use Makefile::AST;
 
-our $VERSION = '0.204';
+our $VERSION = '0.205';
 
 # XXX This should not be hard-coded this way...
 our @Suffixes = (

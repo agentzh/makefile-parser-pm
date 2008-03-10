@@ -1,4 +1,22 @@
-use Test::Base;
+my $reason;
+BEGIN {
+    my $line = (split /\n/, `/usr/bin/env make -v`)[0];
+    if ($line) {
+        warn $line, "\n";
+        if ($line =~ /GNU Make (\d+\.\d+)/) {
+            my $make_ver = $1;
+            if ($make_ver < 3.81) {
+                $reason = 'GNU make too old (at least 3.81 is required).';
+            }
+        } else {
+            $reason = 'No GNU make found.';
+        }
+    } else {
+        $reason = 'No make found in env.';
+    }
+}
+
+use Test::Base $reason ? (skip_all => $reason) : ();
 
 use File::Slurp;
 use IPC::Run3;
@@ -10,8 +28,6 @@ use Test::Make::Util;
 plan tests => 3 * blocks();
 
 my $makefile = 'makesimple.tmp.mk';
-my $line = (split /\n/, `make -v`)[0];
-warn $line, "\n";
 
 my $saved_cwd = cwd;
 
