@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use lib qw(/home/agentz/gmake-db/lib /home/agentz/mdom-gmake/lib);
+#use lib qw(/home/agentz/gmake-db/lib /home/agentz/mdom-gmake/lib);
 
 #use Smart::Comments;
 #use Smart::Comments '####';
@@ -95,13 +95,13 @@ if ($stderr =~ /warning: (overriding|ignoring old) commands for target/) {
 #die "GNU make stdout: $stdout\n";
 
 # XXX debug only
-write_file('/home/agentz/mdom-gmake/make.db', $stdout);
+#write_file('/home/agentz/mdom-gmake/make.db', $stdout);
 
 # patch the database output to work around gmake bugs
 patch_database(\$stdout);
 
 # XXX debug only
-write_file('/home/agentz/mdom-gmake/make.db.patched', $stdout);
+#write_file('/home/agentz/mdom-gmake/make.db.patched', $stdout);
 
 #if ($stdout =~ m{^\s*\./Makefile_\S+\s*:\s*[^\n]*$}ms) {
 #    die $&;
