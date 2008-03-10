@@ -1,5 +1,8 @@
 Revision history for Perl extension Makefile::Parser.
 
+0.208 2008-03-10
+* Added $VERSION to Makefile::AST and Makefile::AST::Evaluator.
+
 0.207 2008-03-10
 * Added POD for Makefile::AST.
 * Added POD for Makefile::AST::Evaluator.

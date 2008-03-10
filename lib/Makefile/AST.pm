@@ -3,6 +3,8 @@ package Makefile::AST;
 use strict;
 use warnings;
 
+our $VERSION = '0.207';
+
 #use Smart::Comments;
 #use Smart::Comments '####';
 
@@ -12,6 +14,7 @@ use Makefile::AST::Rule;
 use Makefile::AST::Variable;
 
 use base 'Class::Accessor::Fast';
+
 __PACKAGE__->mk_ro_accessors(qw{
     phony_targets targets prereqs makefile
     pad_stack named_pads pad_triggers

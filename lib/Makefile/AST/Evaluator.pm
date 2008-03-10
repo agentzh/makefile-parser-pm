@@ -3,6 +3,8 @@ package Makefile::AST::Evaluator;
 use strict;
 use warnings;
 
+our $VERSION = '0.207';
+
 #use Smart::Comments;
 #use Smart::Comments '####';
 use File::stat;
