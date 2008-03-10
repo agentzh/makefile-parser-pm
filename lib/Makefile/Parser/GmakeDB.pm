@@ -521,5 +521,6 @@ it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-L<makesimple>, L<Makefile::AST>, L<Makefile::AST::Evaluator>, L<Makefile::DOM>.
+L<Makefile::AST>, L<Makefile::AST::Evaluator>, L<Makefile::DOM>,
+L<makesimple>, L<pgmake-db>.
 

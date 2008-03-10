@@ -832,7 +832,7 @@ Agent Zhang C<< <agentzh@yahoo.cn> >>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2008 by Agent Zhang (agentzh).
+Copyright (c) 2007-2008 by Agent Zhang (agentzh).
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
@@ -840,5 +840,5 @@ it under the same terms as Perl itself.
 =head1 SEE ALSO
 
 L<Makefile::AST::Evaluator>, L<Makefile::Parser::GmakeDB>,
-L<makesimple>, L<Makefile::DOM>.
+L<makesimple>, L<pgmake-db>, L<Makefile::DOM>.
 

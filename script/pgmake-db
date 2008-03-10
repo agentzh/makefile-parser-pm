@@ -156,3 +156,45 @@ sub patch_database {
     $$ref =~ s/^([^\n]*)(?<!\\):(\S[^\n]*:\n#  Implicit rule search has)/$1\\:$2/msg;
 }
 
+__END__
+
+=head1 NAME
+
+pgmake-db - A make utility using Makefile::Parser::GmakeDB, Makefile::AST, and Makefile::AST::Evaluator
+
+=head1 SYNOPSIS
+
+    $ pgmake-db
+    $ pgmake-db -f mine.mk
+
+=head1 DESCRIPTION
+
+This is a F<make> tool using L<Makefile::Parser::GmakeDB>, L<Makefile::AST>, and L<Makefile::AST::Evaluator>.
+
+This script is primary for testing the whole toolchain via running GNU make's official test suite.
+
+As of this writing, pgmake-db has already passed 51% of GNU make 3.81's test suite.
+
+=head1 SVN REPOSITORY
+
+For the very latest version of this script, check out the source from
+
+L<http://svn.openfoundry.org/makefileparser/branches/gmake-db>.
+
+There is anonymous access to all.
+
+=head1 AUTHOR
+
+Agent Zhang C<< <agentzh@yahoo.cn> >>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (c) 2007-2008 by Agent Zhang (agentzh).
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=head1 SEE ALSO
+
+L<Makefile::Parser::GmakeDB>, L<Makefile::AST>, L<Makefile::AST::Evaluator>, L<Makefile::Parser::GmakeDB>, L<pgmake-db>, L<makesimple>, L<Makefile::DOM>.
+
