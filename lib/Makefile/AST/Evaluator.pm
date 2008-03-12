@@ -3,7 +3,7 @@ package Makefile::AST::Evaluator;
 use strict;
 use warnings;
 
-our $VERSION = '0.207';
+our $VERSION = '0.208';
 
 #use Smart::Comments;
 #use Smart::Comments '####';
@@ -13,7 +13,8 @@ use Class::Trigger qw(firing_rule);
 # XXX put these globals to some better place
 our (
     $Quiet, $JustPrint, $IgnoreErrors,
-    $AlwaysMake, $Question);
+    $AlwaysMake, $Question
+);
 
 sub new ($$) {
     my $class = ref $_[0] ? ref shift : shift;

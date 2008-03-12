@@ -1,12 +1,12 @@
 my $reason;
 BEGIN {
-    my $line = (split /\n/, `/usr/bin/env make -v`)[0];
+    my $line = (split /\n/, `make -v`)[0];
     if ($line) {
         warn $line, "\n";
-        if ($line =~ /GNU Make (\d+\.\d+)/) {
-            my $make_ver = $1;
-            if ($make_ver < 3.81) {
-                $reason = 'GNU make too old (at least 3.81 is required).';
+        if ($line =~ /GNU Make (\d+\.\d+)(\s+(?:alpha|beta))?/) {
+            my ($make_ver, $modifier) = ($1, $2);
+            if ($make_ver < 3.81 || ($make_ver == 3.81 && $modifier)) {
+                $reason = 'GNU make too old (at least 3.81 final is required).';
             }
         } else {
             $reason = 'No GNU make found.';

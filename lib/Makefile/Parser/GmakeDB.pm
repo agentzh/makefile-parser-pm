@@ -10,7 +10,7 @@ use List::MoreUtils qw( none );
 use MDOM::Document::Gmake;
 use Makefile::AST;
 
-our $VERSION = '0.207';
+our $VERSION = '0.208';
 
 # XXX This should not be hard-coded this way...
 our @Suffixes = (
@@ -391,7 +391,7 @@ Makefile::Parser::GmakeDB - GNU makefile parser using GNU make's database dump
 
 =head1 VERSION
 
-This document describes Makefile::Parser::GmakeDB 0.207 released on March 10, 2008.
+This document describes Makefile::Parser::GmakeDB 0.208 released on March 10, 2008.
 
 =head1 SYNOPSIS
 
