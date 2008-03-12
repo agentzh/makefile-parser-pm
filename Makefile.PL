@@ -3,7 +3,7 @@ use lib '.';
 use inc::Module::Install;
 
 name            ('Makefile-Parser');
-perl_version    ('5.004');
+perl_version    ('5.006001');
 all_from        ('lib/Makefile/Parser.pm');
 
 install_script  ('script/plmake');
@@ -21,8 +21,8 @@ requires        ('Makefile::DOM' => '0.003');
 requires        ('Class::Trigger' => '0.13');
 requires        ('Time::HiRes');
 
-build_requires  ('Test::More'      => '0.62');
-build_requires  ('IPC::Run3'       => '0.036');
+build_requires  ('Test::More');
+build_requires  ('IPC::Run3' => '0.036');
 
 use_test_base;
 
