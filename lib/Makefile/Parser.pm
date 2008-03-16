@@ -11,7 +11,7 @@ use Text::Balanced qw( gen_extract_tagged );
 
 #our $Debug = 0;
 our $Strict = 0;
-our $VERSION = '0.209';
+our $VERSION = '0.210';
 our $Error;
 our $Runtime = undef;
 
@@ -134,7 +134,19 @@ sub parse {
 
             #warn "Adding target $tar_name...\n";
             $tar = Makefile::Target->new($tar_name, $colon_type);
-            $tars{$tar_name} = $tar;
+            if (my $old_tars = $tars{$tar_name}) {
+                if ($colon_type eq ':') {
+                    $tar->add_prereq($old_tars->[0]->prereqs);
+                    if (my @cmd = $old_tars->[0]->commands) {
+                        $tar->add_command(@cmd);
+                    }
+                    @$old_tars = $tar;
+                } else {
+                    push @$old_tars, $tar;
+                }
+            } else {
+                $tars{$tar_name} = [$tar];
+            }
             if ($tar_name =~ m/%/) {
                 push @{$self->{_imps}}, $tar_name;
             }
@@ -233,7 +245,7 @@ sub solve_imp {
                 $_
             } $obj->commands;
             $tar->add_command(@cmds);
-            $self->{_tars}->{$depend} = $tar;
+            $self->{_tars}->{$depend} = [$tar];
         }
     }
 }
@@ -254,13 +266,15 @@ sub target {
     my ($self, $tar_name) = @_;
     $self->parse if !defined $self->{_file};
     return $self->{_default} if !defined $tar_name;
-    return $self->{_tars}->{$tar_name};
+    my $tars = $self->{_tars}->{$tar_name};
+    $tars ||= [];
+    wantarray ? @$tars : $tars->[0];
 }
 
 sub targets {
     my $self = shift;
     $self->parse if !defined $self->{_file};
-    return values %{$self->{_tars}};
+    return map { @$_ } values %{$self->{_tars}};
 }
 
 sub roots {
@@ -811,13 +825,13 @@ sub prereqs {
     return @{shift->{_depends}};
 }
 
-sub depends {
-    shift->prereqs(@_);
-}
+*depends = \&prereqs;
 
-sub add_depend {
+sub add_prereq {
     push @{shift->{_depends}}, @_;
 }
+
+*add_depend = \&add_prereq;
 
 sub commands {
     return @{shift->{_commands}};
@@ -867,7 +881,7 @@ Makefile::Parser - A simple parser for Makefiles
 
 =head1 VERSION
 
-This document describes Makefile::Parser 0.209 released on March 10, 2008.
+This document describes Makefile::Parser 0.210 released on March 16, 2008.
 
 =head1 SYNOPSIS
 
@@ -1336,10 +1350,6 @@ C<origin>, C<value>, C<call>, C<flavor>, and C<eval>.
 =item *
 
 Add support for recursively-expanded variables.
-
-=item *
-
-Implement double-colon rules
 
 =item *
 

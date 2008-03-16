@@ -9,7 +9,7 @@ use warnings;
 
 my $dir = -d 't' ? 't' : '.';
 
-use Test::More tests => 157;
+use Test::More tests => 173;
 use Makefile::Parser;
 
 #$Makefile::Parser::Debug = 0;
@@ -320,3 +320,42 @@ is $tar->name, 'foo.obj';
 @depends = $tar->depends;
 is join(' ', @depends), '';
 is join("\n", $tar->commands), 'echo foo.obj';
+
+
+ok $ps->parse('t/Makefile6');
+
+my @tar = $ps->target('all');
+is scalar(@tar), 1, 'all is a single-colon rule';
+$tar = $tar[0];
+is $tar->name, 'all';
+@depends = $tar->prereqs;
+my @cmd = $tar->commands;
+is join(' ', @depends), 'foo bar';
+is join("\n", @cmd), 'echo hallo';
+
+@tar = $ps->target('any');
+is scalar(@tar), 1, 'any is a single-colon rule';
+$tar = $tar[0];
+is $tar->name, 'any';
+@depends = $tar->prereqs;
+@cmd = $tar->commands;
+is join(' ', @depends), 'foo hiya blah blow';
+is join("\n", @cmd), "echo larry\necho howdy";
+
+@tar = $ps->target('foo');
+is scalar(@tar), 2, 'foo is a double-colon rule with 2 instances';
+
+$tar = $tar[0];
+is $tar->name, 'foo';
+@depends = $tar->prereqs;
+@cmd = $tar->commands;
+is join(' ', @depends), 'blah';
+is join("\n", @cmd), "echo Hi";
+
+$tar = $tar[1];
+is $tar->name, 'foo';
+@depends = $tar->prereqs;
+@cmd = $tar->commands;
+is join(' ', @depends), 'howdy';
+is join("\n", @cmd), "echo Hey";
+

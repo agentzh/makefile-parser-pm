@@ -52,4 +52,5 @@ t/Makefile2
 t/Makefile3
 t/Makefile4
 t/Makefile5
+t/Makefile6
 t/makesimple.t

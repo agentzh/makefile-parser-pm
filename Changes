@@ -1,5 +1,12 @@
 Revision history for Perl extension Makefile::Parser.
 
+0.210 2008-03-16
+* Added support for multiple single-colon rules to Makefile::Parser.
+* Added support for multiple double-colon rules to Makefile::parser.
+
+0.209 2008-03-12
+* Calling external GNU make via "make" rather than "/usr/bin/env make".
+
 0.208 2008-03-10
 * Added $VERSION to Makefile::AST and Makefile::AST::Evaluator.
 * Always calling '/usr/bin/env make' in makesimple.

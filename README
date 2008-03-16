@@ -2,7 +2,7 @@ NAME
     Makefile::Parser - A simple parser for Makefiles
 
 VERSION
-    This document describes Makefile::Parser 0.208 released on March 10,
+    This document describes Makefile::Parser 0.210 released on March 16,
     2008.
 
 SYNOPSIS
@@ -388,8 +388,6 @@ TODO
         "origin", "value", "call", "flavor", and "eval".
 
     *   Add support for recursively-expanded variables.
-
-    *   Implement double-colon rules
 
     *   Implement rules with multiple targets
 
