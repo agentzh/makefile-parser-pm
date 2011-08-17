@@ -338,15 +338,25 @@ sub parse ($$) {
             if ($elem->name eq 'endef') {
                 ### parsed a define directive: $directive
                 # trim the trailing new lines in the value:
-                my $last = $directive->{value}->[-1]->last_element;
-                #warn "LAST: '$last'\n";
-                if ($last and $last eq "\n") {
-                    $directive->{value}->[-1]->remove_child($last);
+                #warn "HERE!!! ";
+                #warn quotemeta($directive->{value}->[-1]);
+                my $last = $directive->{value}->[-1];
+                if ("$last" =~ /^\s*$/s) {
+                    pop @{ $directive->{value} }
+
+                } elsif ($last->can('last_element')) {
+                    my $last_elem = $last->last_element;
+                    #warn "LAST: '$last'\n";
+                    if ($last_elem and "$last_elem" =~ /^\s*$/s) {
+                        $last->remove_child($last_elem);
+                    }
                 }
+
                 my $var = Makefile::AST::Variable->new($directive);
                 $ast->add_var($var);
                 undef $var_origin;
                 undef $directive;
+
             } else {
                 warn "warning: line " . $elem->lineno .
                     ": Unknown directive: " . $elem->source;

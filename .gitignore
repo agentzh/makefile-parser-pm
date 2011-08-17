@@ -7,3 +7,4 @@ Makefile.old
 blib/
 t/tmp/
 *.tar.gz
+reindex

@@ -363,13 +363,18 @@ sub eval_var_value ($$) {
         if ($var->flavor eq 'recursive') {
             ## HERE! eval_var_value
             ## eval recursive var: $var
-            return $self->solve_refs_in_tokens(
+            my $val =  $self->solve_refs_in_tokens(
                 $var->value
             );
+            $val =~ s/^\s+|\s+$//gs;
+            #warn "value: $val\n";
+            return $val;
         } else {
             # don't complain about uninitialized value:
             no warnings 'uninitialized';
-            return join '', @{$var->value};
+            my $val = join '', @{$var->value};
+            $val =~ s/^\s+|\s+$//gs;
+            return $val;
         }
     } else {
         # process undefined var:

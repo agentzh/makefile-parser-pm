@@ -60,7 +60,6 @@ run {
         "$name - script/makesimple generated the right output";
     is $stderr, $block->err,
         "$name - script/makesimple generated the right error";
-
 };
 
 __DATA__
@@ -596,4 +595,35 @@ all: bar
 	@echo all
 --- err
 makesimple: *** No rule to make target `bar', needed by `all'.  Ignored.
+
+
+
+=== TEST 27: ifeq/endif
+--- in
+FOO=123
+ifeq ($(FOO), 123)
+    FOO = bar
+endif
+
+all: ; echo $(FOO)
+--- out
+all:
+	echo bar
+--- err
+
+
+
+=== TEST 28: define/endef
+--- in
+define foo =
+
+     bar 
+ 
+endef
+
+all: ; echo $(foo)
+--- out
+all:
+	echo bar
+--- err
 
