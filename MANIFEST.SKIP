@@ -21,3 +21,4 @@ print\.txt
 make-simple\.mk
 ^Makefile8\.txt
 ^Makefile-Parser-
+^reindex$

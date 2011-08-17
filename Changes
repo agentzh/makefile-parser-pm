@@ -1,5 +1,10 @@
 Revision history for Perl extension Makefile::Parser.
 
+0.215 2011-08-18
+* fixed RT #41595: makesimple error: Can't locate object method
+  "last_element" via package "MDOM::Token::Whitespace". thanks
+  raleighr3 and jean.
+
 0.214 2011-08-18
 * fixed a bug when dealing with trailing backslashes in variable
   values. this fixed RT #69319: Error parsing line continuations.
