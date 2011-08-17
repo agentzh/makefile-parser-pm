@@ -1,5 +1,10 @@
 Revision history for Perl extension Makefile::Parser.
 
+0.213 2011-08-17
+* applied the patch from Philip Allison and fixed a bug
+  regarding clearing initial set makefile variables before
+  parsing makefiles.
+
 0.212 2011-08-17
 * Updated the author name, author email address, and code repository in the documentation.
 * Updated the bundled Module::Install to the latest version, 1.01.

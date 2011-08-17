@@ -34,4 +34,4 @@ requires:
 resources:
   license: http://dev.perl.org/licenses/
   repository: http://github.com/agentzh/makefile-parser-pm
-version: 0.212
+version: 0.213
