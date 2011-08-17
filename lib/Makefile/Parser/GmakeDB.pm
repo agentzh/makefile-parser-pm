@@ -500,7 +500,7 @@ I've already reported this issue to the GNU make team as Savannah bug #20069.
 
 =back
 
-=head1 SVN REPOSITORY
+=head1 CODE REPOSITORY
 
 For the very latest version of this script, check out the source from
 

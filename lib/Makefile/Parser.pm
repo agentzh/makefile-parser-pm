@@ -1334,7 +1334,7 @@ If no shell commands is given in the Makefile, an empty array will be returned.
 
 =back
 
-=head1 SVN REPOSITORY
+=head1 CODE REPOSITORY
 
 For the very latest version of this module, check out the source from
 L<http://github.com/agentzh/makefile-parser-pm>. There is
