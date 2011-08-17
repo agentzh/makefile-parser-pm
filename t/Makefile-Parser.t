@@ -51,10 +51,10 @@ is $mk->var('EXE'), "hex2bin.exe";
 is $mk->var('COD'), "main.cod";
 
 is scalar($mk->vars), 26;
-{
-    open my $out, ">b.txt" or die $!;
-    print $out join("\n", sort $mk->vars);
-}
+#{
+#open my $out, ">b.txt" or die $!;
+#print $out join("\n", sort $mk->vars);
+#}
 my @tars = $mk->targets;
 is scalar(@tars), 82;
 isa_ok $tars[0], 'Makefile::Target';
