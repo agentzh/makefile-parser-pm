@@ -1,5 +1,9 @@
 Revision history for Perl extension Makefile::Parser.
 
+0.212 2011-08-17
+* Updated the author name, author email address, and code repository in the documentation.
+* Updated the bundled Module::Install to the latest version, 1.01.
+
 0.211 2008-03-16
 * Added pointer to Makefile::DOM to Makefile::Parser's POD.
 

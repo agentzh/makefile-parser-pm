@@ -2,8 +2,8 @@ NAME
     Makefile::Parser - A simple parser for Makefiles
 
 VERSION
-    This document describes Makefile::Parser 0.211 released on March 16,
-    2008.
+    This document describes Makefile::Parser 0.212 released on 17 August
+    2011.
 
 SYNOPSIS
       use Makefile::Parser;

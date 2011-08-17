@@ -3,7 +3,7 @@ package Makefile::AST;
 use strict;
 use warnings;
 
-our $VERSION = '0.211';
+our $VERSION = '0.212';
 
 #use Smart::Comments;
 #use Smart::Comments '####';
