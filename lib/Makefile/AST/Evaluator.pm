@@ -351,7 +351,7 @@ See the L</SYNOPSIS> for code examples.
 
 For the very latest version of this script, check out the source from
 
-L<http://svn.openfoundry.org/makefileparser/branches/gmake-db>.
+L<http://github.com/agentzh/makefile-parser-pm>.
 
 There is anonymous access to all.
 

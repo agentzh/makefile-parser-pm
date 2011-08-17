@@ -875,6 +875,8 @@ sub run_commands {
 1;
 __END__
 
+=encoding utf-8
+
 =head1 NAME
 
 Makefile::Parser - A simple parser for Makefiles
@@ -1140,7 +1142,7 @@ supported:
 Please consult the GNU make Manual for details and
 also take a look at the following file for some use cases:
 
-L<http://svn.openfoundry.org/mdom/branches/gmake/t/gmake/sanity/func-refs.t>
+L<http://github.com/agentzh/makefile-dom-pm/tree/master/t/gmake/sanity/func-refs.t>
 
 =item Commands after ';'
 
@@ -1335,7 +1337,7 @@ If no shell commands is given in the Makefile, an empty array will be returned.
 =head1 SVN REPOSITORY
 
 For the very latest version of this module, check out the source from
-L<http://svn.openfoundry.org/makefileparser/branches/gmake-db>. There is
+L<http://github.com/agentzh/makefile-parser-pm>. There is
 anonymous access to all.
 
 =head1 TODO
@@ -1411,7 +1413,7 @@ Zhang "agentzh" Yichun, C<< <agentzh@gmail.com> >>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2008 by Zhang "agentzh" Yichun (agentzh).
+Copyright (c) 2005-2011 by Zhang "agentzh" Yichun (章亦春).
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

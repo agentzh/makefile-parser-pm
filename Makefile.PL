@@ -6,6 +6,8 @@ name            ('Makefile-Parser');
 perl_version    ('5.006001');
 all_from        ('lib/Makefile/Parser.pm');
 
+repository 'http://github.com/agentzh/makefile-parser-pm';
+
 install_script  ('script/plmake');
 install_script  ('script/pgmake-db');
 install_script  ('script/makesimple');

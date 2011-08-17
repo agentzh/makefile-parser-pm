@@ -179,7 +179,7 @@ As of this writing, pgmake-db has already passed 51% of GNU make 3.81's test sui
 
 For the very latest version of this script, check out the source from
 
-L<http://svn.openfoundry.org/makefileparser/branches/gmake-db>.
+L<http://github.com/agentzh/makefile-parser-pm>.
 
 There is anonymous access to all.
 

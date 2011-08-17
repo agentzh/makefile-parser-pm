@@ -825,7 +825,7 @@ Adding support for other flavors' makes into this AST libary should make a huge 
 
 For the very latest version of this script, check out the source from
 
-L<http://svn.openfoundry.org/makefileparser/branches/gmake-db>.
+L<http://github.com/agentzh/makefile-parser-pm>.
 
 There is anonymous access to all.
 
