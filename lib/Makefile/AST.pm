@@ -819,7 +819,7 @@ Used to encapsulate information regarding makefile rule commands (e.g. command b
 
 =head1 LIMITATIONS AND TODO
 
-Adding support for other flavors' makes into this AST libary should make a huge amount of sense. The most interesting candiate is Microsoft's NMAKE.
+Adding support for other flavors' makes into this AST library should make a huge amount of sense. The most interesting candiate is Microsoft's NMAKE.
 
 =head1 CODE REPOSITORY
 
