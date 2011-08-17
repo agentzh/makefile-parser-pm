@@ -1,3 +1,4 @@
+^\.git
 ^lib/.*\.txt
 ^t/tmp
 print\.txt
