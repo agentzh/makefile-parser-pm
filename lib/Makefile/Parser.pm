@@ -1407,7 +1407,7 @@ L<plmake>, L<makesimple>, L<Makefile::Parser::GmakeDB>, L<Makefile::GraphViz>, L
 
 =head1 AUTHOR
 
-Zhang "agentzh" Yichun, C<< <agentzh@yahoo.cn> >>
+Zhang "agentzh" Yichun, C<< <agentzh@gmail.com> >>
 
 =head1 COPYRIGHT AND LICENSE
 

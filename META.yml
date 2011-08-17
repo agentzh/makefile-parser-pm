@@ -1,7 +1,7 @@
 --- 
 abstract: A simple parser for Makefiles
 author: 
-  - Zhang "agentzh" Yichun, C<< <agentzh@yahoo.cn> >>
+  - Zhang "agentzh" Yichun, C<< <agentzh@gmail.com> >>
 build_requires: 
   IPC::Run3: 0.036
   Test::More: 0
