@@ -11,7 +11,7 @@ use Text::Balanced qw( gen_extract_tagged );
 
 #our $Debug = 0;
 our $Strict = 0;
-our $VERSION = '0.210';
+our $VERSION = '0.211';
 our $Error;
 our $Runtime = undef;
 
@@ -881,7 +881,7 @@ Makefile::Parser - A simple parser for Makefiles
 
 =head1 VERSION
 
-This document describes Makefile::Parser 0.210 released on March 16, 2008.
+This document describes Makefile::Parser 0.211 released on March 16, 2008.
 
 =head1 SYNOPSIS
 
@@ -938,10 +938,13 @@ specified by a Makefile using the amazing GraphViz library. The L<Make>
 module is not satisfactory for this purpose, so I decided to build one
 of my own.
 
-B<WARNING> This stuff is highly experimental and is currently at B<pre-alpha>
+B<WARNING!!!> This stuff is highly experimental and is currently at B<pre-alpha>
 stage, so production use is strongly discouraged. Right now it's just a toy for parsing trivial makefiles.
 
-If you're looking for something more serious for parsing GNU makefiles, please see L<Makefile::Parser::GmakeDB> instead. The GmakeDB parser has passed 51% of GNU make's official test suite as of this writing.
+B<IMPORTANT!!!> If you're looking for something more serious for parsing GNU makefiles, please see L<Makefile::Parser::GmakeDB> instead. The GmakeDB parser has passed 51% of GNU make's official test suite as of this writing.
+
+If you're looking for something that can parse makefiles losslessly,
+take a look at the L<Makefile::DOM> module which may fit your needs.
 
 =head2 SYNTAX SUPPORTED
 

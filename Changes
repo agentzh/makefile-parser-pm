@@ -1,5 +1,8 @@
 Revision history for Perl extension Makefile::Parser.
 
+0.211 2008-03-16
+* Added pointer to Makefile::DOM to Makefile::Parser's POD.
+
 0.210 2008-03-16
 * Added support for multiple single-colon rules to Makefile::Parser.
 * Added support for multiple double-colon rules to Makefile::parser.

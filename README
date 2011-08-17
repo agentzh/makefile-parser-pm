@@ -2,7 +2,7 @@ NAME
     Makefile::Parser - A simple parser for Makefiles
 
 VERSION
-    This document describes Makefile::Parser 0.210 released on March 16,
+    This document describes Makefile::Parser 0.211 released on March 16,
     2008.
 
 SYNOPSIS
@@ -58,13 +58,17 @@ DESCRIPTION
     module is not satisfactory for this purpose, so I decided to build one
     of my own.
 
-    WARNING This stuff is highly experimental and is currently at pre-alpha
-    stage, so production use is strongly discouraged. Right now it's just a
-    toy for parsing trivial makefiles.
+    WARNING!!! This stuff is highly experimental and is currently at
+    pre-alpha stage, so production use is strongly discouraged. Right now
+    it's just a toy for parsing trivial makefiles.
 
-    If you're looking for something more serious for parsing GNU makefiles,
-    please see Makefile::Parser::GmakeDB instead. The GmakeDB parser has
-    passed 51% of GNU make's official test suite as of this writing.
+    IMPORTANT!!! If you're looking for something more serious for parsing
+    GNU makefiles, please see Makefile::Parser::GmakeDB instead. The GmakeDB
+    parser has passed 51% of GNU make's official test suite as of this
+    writing.
+
+    If you're looking for something that can parse makefiles losslessly,
+    take a look at the Makefile::DOM module which may fit your needs.
 
   SYNTAX SUPPORTED
     The current parser implementation has been trying to support a common
