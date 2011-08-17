@@ -1,7 +1,7 @@
 #: Makefile-Parser.t
 #: Test script for Makefile/Parser.pm
 #: v0.12
-#: Copyright (c) 2005 Agent Zhang
+#: Copyright (c) 2005 Zhang "agentzh" Yichun
 #: 2005-09-24 2005-10-28
 
 use strict;

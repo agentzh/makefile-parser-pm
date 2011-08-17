@@ -421,10 +421,10 @@ SEE ALSO
     plmake, makesimple, Makefile::Parser::GmakeDB, Makefile::GraphViz, Make.
 
 AUTHOR
-    Agent Zhang, "<agentzh@yahoo.cn>"
+    Zhang "agentzh" Yichun, "<agentzh@yahoo.cn>"
 
 COPYRIGHT AND LICENSE
-    Copyright (c) 2005-2008 by Agent Zhang (agentzh).
+    Copyright (c) 2005-2008 by Zhang "agentzh" Yichun (agentzh).
 
     This library is free software; you can redistribute it and/or modify it
     under the same terms as Perl itself.

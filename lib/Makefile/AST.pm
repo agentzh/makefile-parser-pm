@@ -831,11 +831,11 @@ There is anonymous access to all.
 
 =head1 AUTHOR
 
-Agent Zhang C<< <agentzh@yahoo.cn> >>
+Zhang "agentzh" Yichun C<< <agentzh@yahoo.cn> >>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2007-2008 by Agent Zhang (agentzh).
+Copyright (c) 2007-2008 by Zhang "agentzh" Yichun (agentzh).
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
