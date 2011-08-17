@@ -2,7 +2,7 @@ NAME
     Makefile::Parser - A simple parser for Makefiles
 
 VERSION
-    This document describes Makefile::Parser 0.213 released on 17 August
+    This document describes Makefile::Parser 0.214 released on 17 August
     2011.
 
 SYNOPSIS
@@ -379,7 +379,7 @@ The Makefile::Target Class
         current target. If no shell commands is given in the Makefile, an
         empty array will be returned.
 
-SVN REPOSITORY
+CODE REPOSITORY
     For the very latest version of this module, check out the source from
     <http://github.com/agentzh/makefile-parser-pm>. There is anonymous
     access to all.

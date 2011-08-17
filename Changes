@@ -1,5 +1,10 @@
 Revision history for Perl extension Makefile::Parser.
 
+0.214 2011-08-18
+* fixed a bug when dealing with trailing backslashes in variable
+  values. this fixed RT #69319: Error parsing line continuations.
+  thanks Marcelo.
+
 0.213 2011-08-17
 * applied the patch from Philip Allison and fixed a bug
   regarding clearing initial set makefile variables before
