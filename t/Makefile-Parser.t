@@ -50,7 +50,11 @@ is $mk->var('C_MIN_T_FILES'), join(' ', qw/t\\cpat_cover.ast.t t\\cpat_cover.t
 is $mk->var('EXE'), "hex2bin.exe";
 is $mk->var('COD'), "main.cod";
 
-is scalar($mk->vars), 23;
+is scalar($mk->vars), 26;
+{
+    open my $out, ">b.txt" or die $!;
+    print $out join("\n", sort $mk->vars);
+}
 my @tars = $mk->targets;
 is scalar(@tars), 82;
 isa_ok $tars[0], 'Makefile::Target';
@@ -109,7 +113,7 @@ isa_ok $tar, 'Makefile::Target';
 is $tar->name, 't_dir';
 @depends = $tar->depends;
 is scalar(@depends), 0;
-is join("\n", $tar->commands), "cd t\n\$(MAKE) /nologo\ncd..";
+is join("\n", $tar->commands), "cd t\n$0 /nologo\ncd..";
 is $tar->colon_type, ':';
 
 $tar = $mk->target('run_test');
@@ -311,7 +315,7 @@ isa_ok $tar, 'Makefile::Target';
 is $tar->name, 'abc';
 @depends = $tar->depends;
 is join(' ', @depends), 'foo.obj';
-is join("\n", $tar->commands), 'link 5 5 $(MAKE) $(CC)  > abc';
+is join("\n", $tar->commands), "link 5 5 $0 cc  > abc";
 
 $tar = $ps->target('foo.obj');
 ok $tar;

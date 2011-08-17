@@ -69,7 +69,7 @@ sub parse {
     my ($var, $value, $tar_name, $tar, $colon_type, $depends, $cmd);
     my @cmds;
     my %tars;
-    %$rvars = ();
+    #%$rvars = ();
     my $first_tar = 1;
     while (<$in>) {
         next if /^\s*#/;
