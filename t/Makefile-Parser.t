@@ -9,7 +9,7 @@ use warnings;
 
 my $dir = -d 't' ? 't' : '.';
 
-use Test::More tests => 173;
+use Test::More tests => 175;
 use Makefile::Parser;
 
 #$Makefile::Parser::Debug = 0;
@@ -20,12 +20,14 @@ my $mk = $pack->new;
 ok $mk, 'object defined';
 isa_ok $mk, 'Makefile::Parser';
 ok $mk->parse("$dir/Makefile");
+#warn Makefile::Parser->error;
 is $mk->{_file}, "$dir/Makefile";
 can_ok $mk, 'error';
 ok !defined $pack->error;
 
-is $mk->var('FOO'), "\\";
-is $mk->var('FOO2'), "a b \\";
+is $mk->var('FOO'), "";
+is $mk->var('FOO2'), "a b c";
+#exit;
 is $mk->var('IDU_LIB'), "inc\\Idu.pm";
 is $mk->var('DISASM_LIB'), "inc\\Disasm.pm";
 is $mk->var('CIDU_DLL'), "C\\idu.dll";
@@ -362,4 +364,15 @@ is $tar->name, 'foo';
 @cmd = $tar->commands;
 is join(' ', @depends), 'howdy';
 is join("\n", @cmd), "echo Hey";
+
+#####
+# Makefile5
+####
+
+#warn "!!! Mafefile4 !!!\n";
+
+$ps = Makefile::Parser->new;
+ok $ps->parse('t/Makefile7'), "Makefile7 parsed";
+#die Makefile::Parser->error;
+is $ps->var("FOO"), '1 2 3', "FOO in Makefile7 ok";
 

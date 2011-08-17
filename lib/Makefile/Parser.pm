@@ -72,8 +72,8 @@ sub parse {
     #%$rvars = ();
     my $first_tar = 1;
     while (<$in>) {
-        next if /^\s*#/;
-        next if /^\s*$/;
+        next if /^\s*#/ and $state ne 'S_IN_VAL';
+        next if /^\s*$/ and $state ne 'S_IN_VAL';
         #$tar_name = '' unless defined $var;
         #warn "(tar: $tar_name) Switching to tate $state with $_";
         #warn $state if $state ne 'S_IDLE';
@@ -90,35 +90,42 @@ sub parse {
         if (($state eq 'S_IDLE' or $state eq 'S_CMD') and /^(\w+) \s* :?= \s* (.*)$/xo) {
             $var = $1;
             $value = $2;
-            if ($value =~ s/\s+\\$//o) {
+            #warn "matched $var = $value\n";
+            if ($value =~ m{\\\s*$}) {
+                $value .= "\n";
                 $state = 'S_IN_VAL' ;
             } else {
-                $value =~ s/\^\\$/\\/;
-                $value =~ s/#.*//s;
+                $value =~ s/#.*//m;
                 $rvars->{$var} = $value;
                 ### variable: $var
                 ### value: $value
                 $state = 'S_IDLE';
             }
             #warn "$1 * $2 * $3";
-        }
-        elsif ($state eq 'S_IN_VAL' and /^\s+ (.*)$/xo) {
+
+        } elsif ($state eq 'S_IN_VAL') {
             #warn $1;
-            $value .= " $1";
-            if ($value !~ s/\s+\\$//o) {
+            my $line = $_;
+            #warn "adding value line $line\n";
+            $value .= "$line\n";
+            if ($line !~ m{\\\s*$}) {
                 $state = 'S_IDLE' ;
-                $value =~ s/\^\\$/\\/;
-                $value =~ s/#.*//s;
+                #warn "Processing value '$value'\n";
+                $value =~ s/[ \t]*\\\n[ \t]*/ /sg;
+                $value =~ s/#.*//smg;
+                #warn "Finale value '$value'\n";
+                $value =~ s/\n//gs;
+                $value =~ s/^\s+|\s+$//gs;
                 $rvars->{$var} = $value;
                 #warn "$var <=> $value\n";
             }
-        }
-        elsif (($state eq 'S_IDLE' or $state eq 'S_CMD') and /^(\.\w+) (\.\w+) \s* (::?)\s*$/xo) {
+
+        } elsif (($state eq 'S_IDLE' or $state eq 'S_CMD') and /^(\.\w+) (\.\w+) \s* (::?)\s*$/xo) {
             $_ = "%$2 $3 %$1\n";
             #warn $_;
             redo;
-        }
-        elsif (($state eq 'S_IDLE' or $state eq 'S_CMD') and /^(\S[^:]*) (::?) \s* (.*)$/xo) {
+
+        } elsif (($state eq 'S_IDLE' or $state eq 'S_CMD') and /^(\S[^:]*) (::?) \s* (.*)$/xo) {
             $tar_name = $1;
             $colon_type = $2;
             $depends = $3;
@@ -193,6 +200,8 @@ sub parse {
         elsif ($Strict) {
             $Error = "syntax error: line $.: $_\n";
             return undef;
+        } else {
+            warn "I dunno how to do with it: $_\n";
         }
     }
     $self->{_tars} = \%tars;
