@@ -335,7 +335,7 @@ This variable corresponds to GNU make's command line option C<-n>, C<--just-prin
 
 =item C<$IgnoreErrors>
 
-This variable corresponds to GNU make's command line option C<-i> or C<--ignore-errors>，It's used to ignore the errors of shell commands being executed during the make process. The default behavior is quitting as soon as a shell command without the C<-> modifier fails.
+This variable corresponds to GNU make's command line option C<-i> or C<--ignore-errors>. It's used to ignore the errors of shell commands being executed during the make process. The default behavior is quitting as soon as a shell command without the C<-> modifier fails.
 
 =back
 
