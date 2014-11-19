@@ -19,7 +19,7 @@ requires        ('File::Spec');
 requires        ('Class::Accessor::Fast');
 requires        ('Cwd');
 requires        ('File::Slurp');
-requires        ('Makefile::DOM' => '0.005');
+requires        ('Makefile::DOM' => '0.008');
 requires        ('Class::Trigger' => '0.13');
 requires        ('Time::HiRes');
 
