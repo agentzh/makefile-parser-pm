@@ -24,6 +24,7 @@ use Cwd;
 
 use lib 't/lib';
 use Test::Make::Util;
+#use Test::LongString;
 
 plan tests => 3 * blocks();
 
@@ -56,8 +57,18 @@ run {
         \$stderr,
     );
     is(($? >> 8), 0, "$name - process returned the 0 status");
-    is $stdout, $block->out,
-        "$name - script/makesimple generated the right output";
+
+    my $expected_out = $block->out;
+
+    if (ref $expected_out && ref $expected_out eq 'Regexp') {
+        like $stdout, $block->out,
+            "$name - script/makesimple generated the right output";
+
+    } else {
+        is $stdout, $block->out,
+            "$name - script/makesimple generated the right output";
+    }
+
     is $stderr, $block->err,
         "$name - script/makesimple generated the right error";
 };
@@ -558,12 +569,12 @@ all:
   $(bar) \
       $(baz)
 
---- out
-all:
-	@echo hello \
-	my \
-	world
-
+--- out eval
+qr/^all:
+\t\@echo hello \\
+[ \t]+my \\
+[ \t]+world
+$/s
 --- err
 
 
