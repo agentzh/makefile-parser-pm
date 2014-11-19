@@ -1,5 +1,11 @@
 Revision history for Perl extension Makefile::Parser.
 
+0.216 2014-11-18
+* fixed test failures in pod.t. thanks Olof Johansson for the patch.
+* fixed test failures in simplemake.t with Gnu make 3.82.
+* fixed warnings while running the build/test system. thanks Alberto
+  Simões for the report.
+
 0.215 2011-08-18
 * fixed RT #41595: makesimple error: Can't locate object method
   "last_element" via package "MDOM::Token::Whitespace". thanks
