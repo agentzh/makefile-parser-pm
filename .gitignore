@@ -8,3 +8,5 @@ blib/
 t/tmp/
 *.tar.gz
 reindex
+MYMETA.json
+MYMETA.yml
