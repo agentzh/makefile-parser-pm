@@ -1418,11 +1418,11 @@ L<plmake>, L<makesimple>, L<Makefile::Parser::GmakeDB>, L<Makefile::GraphViz>, L
 
 =head1 AUTHOR
 
-Zhang "agentzh" Yichun, C<< <agentzh@gmail.com> >>
+Yichun "agentzh" Zhang, C<< <agentzh@gmail.com> >>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2011 by Zhang "agentzh" Yichun (章亦春).
+Copyright (c) 2005-2014 by Yichun "agentzh" Zhang (章亦春).
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

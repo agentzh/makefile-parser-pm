@@ -1,7 +1,7 @@
 ---
 abstract: 'A simple parser for Makefiles'
 author:
-  - "Zhang \"agentzh\" Yichun, C<< <agentzh@gmail.com> >>"
+  - "Yichun \"agentzh\" Zhang, C<< <agentzh@gmail.com> >>"
 build_requires:
   ExtUtils::MakeMaker: 6.59
   IPC::Run3: 0.036
@@ -34,5 +34,5 @@ requires:
   perl: 5.6.1
 resources:
   license: http://dev.perl.org/licenses/
-  repository: http://github.com/agentzh/makefile-parser-pm
+  repository: https://github.com/agentzh/makefile-parser-pm
 version: 0.216

@@ -474,13 +474,13 @@ to [http://rt.cpan.org/NoAuth/Bugs.html?Dist=Makefile-Parser](http://rt.cpan.org
 
 # AUTHOR
 
-Zhang "agentzh" Yichun, `<agentzh@gmail.com>`
+Yichun "agentzh" Zhang, `<agentzh@gmail.com>`
 
 [Back to TOC](#table-of-contents)
 
 # COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2011 by Zhang "agentzh" Yichun (章亦春).
+Copyright (c) 2005-2014 by Yichun "agentzh" Zhang (章亦春).
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

@@ -32,7 +32,7 @@ Makefile.PL
 MANIFEST
 MANIFEST.SKIP
 META.yml
-README
+README.md
 script/makesimple
 script/pgmake-db
 script/plmake
