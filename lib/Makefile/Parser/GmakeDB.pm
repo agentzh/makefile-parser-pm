@@ -395,6 +395,8 @@ sub parse ($$) {
 1;
 __END__
 
+=encoding utf8
+
 =head1 NAME
 
 Makefile::Parser::GmakeDB - GNU makefile parser using GNU make's database dump
