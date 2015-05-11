@@ -1,10 +1,11 @@
-my $reason;
+my( $reason, $make_ver );
 BEGIN {
     my $line = (split /\n/, `make -v`)[0];
     if ($line) {
         warn $line, "\n";
         if ($line =~ /GNU Make (\d+\.\d+)(\s+(?:alpha|beta))?/) {
-            my ($make_ver, $modifier) = ($1, $2);
+            my $modifier;
+            ($make_ver, $modifier) = ($1, $2);
             if ($make_ver < 3.81 || ($make_ver == 3.81 && $modifier)) {
                 $reason = 'GNU make too old (at least 3.81 final is required).';
             }
@@ -24,9 +25,9 @@ use Cwd;
 
 use lib 't/lib';
 use Test::Make::Util;
-#use Test::LongString;
+use Test::More;
 
-plan tests => 3 * blocks();
+plan tests => 1 * blocks();
 
 my $makefile = 'makesimple.tmp.mk';
 
@@ -35,6 +36,12 @@ my $saved_cwd = cwd;
 run {
     my $block = shift;
     my $name = $block->name;
+
+    local $TODO;
+    $TODO = "things changed with make 4.0" if $make_ver >= 4 and $name =~ /ditto|target-specific variables/;
+
+    subtest $name => sub {
+
     chdir $saved_cwd;
     system('rm -rf t/tmp');
     system('mkdir t/tmp');
@@ -71,6 +78,8 @@ run {
 
     is $stderr, $block->err,
         "$name - script/makesimple generated the right error";
+
+    }
 };
 
 __DATA__
