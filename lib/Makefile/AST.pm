@@ -780,6 +780,8 @@ sub solve_refs_in_tokens ($$) {
 1;
 __END__
 
+=encoding utf8
+
 =head1 NAME
 
 Makefile::AST - AST for (GNU) makefiles

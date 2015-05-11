@@ -268,6 +268,8 @@ sub make_by_rule ($$$) {
 1;
 __END__
 
+=encoding utf8
+
 =head1 NAME
 
 Makefile::AST::Evaluator - Evaluator and runtime for Makefile::AST instances
