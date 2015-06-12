@@ -154,7 +154,7 @@ sub parse ($$) {
                 undef $var_origin;
             }
         }
-        elsif ($elem =~ /^#\s+(automatic|makefile|default|environment|command line)/) {
+        elsif ($elem =~ /^#\s+(automatic|makefile|default|environment|command line|'override' directive)/) {
             $var_origin = $1;
             $var_origin = 'file' if $var_origin eq 'makefile';
             $next_var_lineno = $elem->lineno + 1;
